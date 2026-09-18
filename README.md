@@ -19,3 +19,7 @@ To test a location in Simulator, choose **Features > Location** and select a pre
 ## Location architecture
 
 `LocationManager` implements the `LocationProviding` protocol and publishes the latest one-shot location. Future features such as station autocomplete can depend on that protocol, observe `locationPublisher`, and rank results without coupling search logic to Core Location.
+
+## Location usage storage
+
+`LocalLocationUsageStore` records each selected location in an on-device SQLite database. `LocationSelectionHandler.didSelect(_:)` is the binding for a future autocomplete selection callback; it returns that location's rolling seven-day usage count. The store can also return the five most-used locations for any rolling date window.
