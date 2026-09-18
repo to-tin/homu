@@ -10,6 +10,8 @@
 		1A0000000000000000000001 /* HomuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000011 /* HomuApp.swift */; };
 		1A0000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000012 /* ContentView.swift */; };
 		1A0000000000000000000003 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000013 /* LocationManager.swift */; };
+		1A0000000000000000000004 /* LocationSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000014 /* LocationSelection.swift */; };
+		1A0000000000000000000005 /* LocationUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000015 /* LocationUsageStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -17,6 +19,8 @@
 		1A0000000000000000000011 /* HomuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomuApp.swift; sourceTree = "<group>"; };
 		1A0000000000000000000012 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		1A0000000000000000000013 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
+		1A0000000000000000000014 /* LocationSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationSelection.swift; sourceTree = "<group>"; };
+		1A0000000000000000000015 /* LocationUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationUsageStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,6 +48,8 @@
 				1A0000000000000000000011 /* HomuApp.swift */,
 				1A0000000000000000000012 /* ContentView.swift */,
 				1A0000000000000000000013 /* LocationManager.swift */,
+				1A0000000000000000000014 /* LocationSelection.swift */,
+				1A0000000000000000000015 /* LocationUsageStore.swift */,
 			);
 			path = Homu;
 			sourceTree = "<group>";
@@ -127,6 +133,8 @@
 				1A0000000000000000000001 /* HomuApp.swift in Sources */,
 				1A0000000000000000000002 /* ContentView.swift in Sources */,
 				1A0000000000000000000003 /* LocationManager.swift in Sources */,
+				1A0000000000000000000004 /* LocationSelection.swift in Sources */,
+				1A0000000000000000000005 /* LocationUsageStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
