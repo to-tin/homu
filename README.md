@@ -15,3 +15,7 @@ A minimal SwiftUI iOS app that opens to an Apple Map and displays the user's cur
 4. Build and run, then allow location access when prompted.
 
 To test a location in Simulator, choose **Features > Location** and select a preset or enter a custom location.
+
+## Location architecture
+
+`LocationManager` implements the `LocationProviding` protocol and publishes the latest one-shot location. Future features such as station autocomplete can depend on that protocol, observe `locationPublisher`, and rank results without coupling search logic to Core Location.
