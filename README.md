@@ -23,3 +23,7 @@ To test a location in Simulator, choose **Features > Location** and select a pre
 ## Location usage storage
 
 `LocalLocationUsageStore` records each selected location in an on-device SQLite database. `LocationSelectionHandler.didSelect(_:)` is the binding for a future autocomplete selection callback; it returns that location's rolling seven-day usage count. The store can also return the five most-used locations for any rolling date window.
+
+## Trip notifications
+
+`TripMonitor.startTrip(to:)` schedules one-shot location notifications at 1 km and 150 m from the selected station. `TripMonitor.endTrip()` cancels them. The active trip is persisted locally so future UI can reflect it after an app relaunch. Notifications use the default system sound, which follows the user's notification haptic settings; foreground delivery also triggers notification feedback directly.
