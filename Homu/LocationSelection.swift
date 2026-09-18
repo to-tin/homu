@@ -2,7 +2,7 @@ import CoreLocation
 import Foundation
 import MapKit
 
-struct LocationSelection: Identifiable, Sendable {
+struct LocationSelection: Codable, Identifiable, Sendable {
     let id: String
     let name: String
     let latitude: Double
