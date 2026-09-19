@@ -10,9 +10,10 @@ A minimal SwiftUI iOS app that opens to an Apple Map and displays the user's cur
 ## Run the app
 
 1. Open `Homu.xcodeproj` in Xcode.
-2. Select the `Homu` scheme and an iPhone simulator or connected device.
-3. Choose your development team under **Signing & Capabilities** if running on a device.
-4. Build and run, then allow location access when prompted.
+2. Add your public Mapbox token as the `MAPBOX_ACCESS_TOKEN` user-defined build setting.
+3. Select the `Homu` scheme and an iPhone simulator or connected device.
+4. Choose your development team under **Signing & Capabilities** if running on a device.
+5. Build and run, then allow location access when prompted.
 
 To test a location in Simulator, choose **Features > Location** and select a preset or enter a custom location.
 

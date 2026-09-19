@@ -1,38 +1,45 @@
 import CoreLocation
-import MapKit
+import MapboxMaps
 import SwiftUI
 
+private let tokyo = CLLocationCoordinate2D(latitude: 35.6812, longitude: 139.7671)
+
 struct ContentView: View {
-    @StateObject private var locationManager = LocationManager()
-    @State private var cameraPosition: MapCameraPosition = .userLocation(fallback: .automatic)
+    @State private var query = ""
 
     var body: some View {
-        Map(position: $cameraPosition) {
-            UserAnnotation()
-        }
-        .mapControls {
-            MapUserLocationButton()
-            MapCompass()
-        }
-        .mapStyle(.standard(elevation: .realistic))
-        .ignoresSafeArea()
-        .overlay(alignment: .bottom) {
-            if locationManager.authorizationStatus == .denied ||
-                locationManager.authorizationStatus == .restricted {
-                permissionMessage
+        Map(initialViewport: .camera(center: tokyo, zoom: 5))
+            .mapStyle(.light)
+            .ornamentOptions(OrnamentOptions(
+                scaleBar: ScaleBarViewOptions(visibility: .hidden),
+                attributionButton: AttributionButtonOptions(margins: CGPoint(x: -1000, y: -1000))
+            ))
+            .ignoresSafeArea()
+            .overlay(alignment: .top) {
+                SearchBar(query: $query)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
             }
-        }
-        .task {
-            locationManager.requestAccess()
-        }
+    }
+}
+
+private struct SearchBar: View {
+    @Binding var query: String
+
+    private var placeholder: String {
+        Locale.current.language.languageCode?.identifier == "ja" ? "駅を検索" : "Search stations"
     }
 
-    private var permissionMessage: some View {
-        Text("Location access is off. Enable it in Settings to see your position on the map.")
-            .font(.callout)
-            .multilineTextAlignment(.center)
-            .padding()
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
-            .padding()
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+            TextField(placeholder, text: $query)
+                .textFieldStyle(.plain)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color.white, in: Capsule())
+        .shadow(color: .black.opacity(0.12), radius: 10, y: 2)
     }
 }

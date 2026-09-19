@@ -13,6 +13,7 @@
 		1A0000000000000000000004 /* LocationSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000014 /* LocationSelection.swift */; };
 		1A0000000000000000000005 /* LocationUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000015 /* LocationUsageStore.swift */; };
 		1A0000000000000000000006 /* TripMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000016 /* TripMonitor.swift */; };
+		2FEF12F8305E043000C88355 /* MapboxMaps in Frameworks */ = {isa = PBXBuildFile; productRef = 2FEF12F7305E043000C88355 /* MapboxMaps */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2FEF12F8305E043000C88355 /* MapboxMaps in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -81,6 +83,9 @@
 			dependencies = (
 			);
 			name = Homu;
+			packageProductDependencies = (
+				2FEF12F7305E043000C88355 /* MapboxMaps */,
+			);
 			productName = Homu;
 			productReference = 1A0000000000000000000010 /* Homu.app */;
 			productType = "com.apple.product-type.application";
@@ -109,6 +114,9 @@
 				Base,
 			);
 			mainGroup = 1A0000000000000000000030;
+			packageReferences = (
+				2FEF12F6305E043000C88355 /* XCRemoteSwiftPackageReference "mapbox-maps-ios" */,
+			);
 			productRefGroup = 1A0000000000000000000032 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -256,6 +264,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Homu;
+				INFOPLIST_KEY_MBXAccessToken = "$(MAPBOX_ACCESS_TOKEN)";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Homu uses your location to show where you are on the map.";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Homu monitors your active trip in the background to alert you near your station and when you arrive.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -284,6 +293,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Homu;
+				INFOPLIST_KEY_MBXAccessToken = "$(MAPBOX_ACCESS_TOKEN)";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Homu uses your location to show where you are on the map.";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Homu monitors your active trip in the background to alert you near your station and when you arrive.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -325,6 +335,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		2FEF12F6305E043000C88355 /* XCRemoteSwiftPackageReference "mapbox-maps-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mapbox/mapbox-maps-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.31.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2FEF12F7305E043000C88355 /* MapboxMaps */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2FEF12F6305E043000C88355 /* XCRemoteSwiftPackageReference "mapbox-maps-ios" */;
+			productName = MapboxMaps;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1A0000000000000000000070 /* Project object */;
 }
