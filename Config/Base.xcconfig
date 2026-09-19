@@ -1,0 +1,4 @@
+// Shared build settings. Developer-specific secrets belong in Local.xcconfig.
+MAPBOX_ACCESS_TOKEN =
+
+#include? "Local.xcconfig"

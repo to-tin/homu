@@ -27,6 +27,23 @@ struct ContentView: View {
     }
 
     var body: some View {
+        if hasMapboxAccessToken {
+            map
+        } else {
+            missingTokenView
+        }
+    }
+
+    private var hasMapboxAccessToken: Bool {
+        guard let token = Bundle.main.object(forInfoDictionaryKey: "MBXAccessToken") as? String else {
+            return false
+        }
+
+        let trimmedToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedToken.hasPrefix("pk.") && trimmedToken.count > 3
+    }
+
+    private var map: some View {
         ZStack {
             MapReader { proxy in
                 Map(initialViewport: .camera(center: tokyo, zoom: 5))
@@ -102,6 +119,14 @@ struct ContentView: View {
             }
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.88), value: isSearchActive)
+    }
+
+    private var missingTokenView: some View {
+        ContentUnavailableView {
+            Label("Mapbox Token Required", systemImage: "map")
+        } description: {
+            Text("Add your public Mapbox token to Config/Local.xcconfig, then rebuild the app.")
+        }
     }
 
     private func activate() {
