@@ -26,4 +26,4 @@ To test a location in Simulator, choose **Features > Location** and select a pre
 
 ## Trip notifications
 
-`TripMonitor.startTrip(to:)` schedules one-shot location notifications at 1 km and 150 m from the selected station. `TripMonitor.endTrip()` cancels them. The active trip is persisted locally so future UI can reflect it after an app relaunch. Notifications use the default system sound, which follows the user's notification haptic settings; foreground delivery also triggers notification feedback directly.
+`TripMonitor.startTrip(to:)` schedules one-shot location notifications at 1 km and 150 m from the selected station. `TripMonitor.endTrip()` performs the core cleanup by clearing the persisted trip and removing its notifications. `TripCancellationHandler.cancelTrip()` is an idempotent wrapper intended for a future cancel button, leaving room for cancellation-specific behavior without changing the underlying trip lifecycle. Notifications use the default system sound, which follows the user's notification haptic settings; foreground delivery also triggers notification feedback directly.

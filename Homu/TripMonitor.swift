@@ -17,7 +17,24 @@ protocol TripMonitoring: AnyObject {
     var activeTrip: ActiveTrip? { get }
 
     func startTrip(to destination: LocationSelection) async throws
-    func endTrip()
+
+    @discardableResult
+    func endTrip() -> Bool
+}
+
+@MainActor
+struct TripCancellationHandler {
+    private let tripMonitor: any TripMonitoring
+
+    init(tripMonitor: any TripMonitoring) {
+        self.tripMonitor = tripMonitor
+    }
+
+    /// The future cancel button can invoke this method directly.
+    @discardableResult
+    func cancelTrip() -> Bool {
+        tripMonitor.endTrip()
+    }
 }
 
 @MainActor
@@ -96,14 +113,16 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
         }
     }
 
-    func endTrip() {
-        guard let trip = activeTrip else { return }
+    @discardableResult
+    func endTrip() -> Bool {
+        guard let trip = activeTrip else { return false }
 
         let identifiers = Proximity.allCases.map { notificationID(for: $0, tripID: trip.id) }
         notificationCenter.removePendingNotificationRequests(withIdentifiers: identifiers)
         notificationCenter.removeDeliveredNotifications(withIdentifiers: identifiers)
         defaults.removeObject(forKey: Self.persistedTripKey)
         activeTrip = nil
+        return true
     }
 
     private func scheduleNotifications(for trip: ActiveTrip) async throws {
