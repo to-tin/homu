@@ -10,8 +10,10 @@
 		1A0000000000000000000001 /* HomuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000011 /* HomuApp.swift */; };
 		1A0000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000012 /* ContentView.swift */; };
 		1A0000000000000000000003 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000013 /* LocationManager.swift */; };
+		1A0000000000000000000004 /* LocationSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000014 /* LocationSelection.swift */; };
+		1A0000000000000000000005 /* LocationUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000015 /* LocationUsageStore.swift */; };
+		1A0000000000000000000006 /* TripMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000016 /* TripMonitor.swift */; };
 		2FEF12F8305E043000C88355 /* MapboxMaps in Frameworks */ = {isa = PBXBuildFile; productRef = 2FEF12F7305E043000C88355 /* MapboxMaps */; };
-		2FEF12FA305E0CC700C88355 /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FEF12F9305E0CC700C88355 /* Secrets.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,7 +21,9 @@
 		1A0000000000000000000011 /* HomuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomuApp.swift; sourceTree = "<group>"; };
 		1A0000000000000000000012 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		1A0000000000000000000013 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
-		2FEF12F9305E0CC700C88355 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
+		1A0000000000000000000014 /* LocationSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationSelection.swift; sourceTree = "<group>"; };
+		1A0000000000000000000015 /* LocationUsageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationUsageStore.swift; sourceTree = "<group>"; };
+		1A0000000000000000000016 /* TripMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripMonitor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,7 +52,9 @@
 				1A0000000000000000000011 /* HomuApp.swift */,
 				1A0000000000000000000012 /* ContentView.swift */,
 				1A0000000000000000000013 /* LocationManager.swift */,
-				2FEF12F9305E0CC700C88355 /* Secrets.swift */,
+				1A0000000000000000000014 /* LocationSelection.swift */,
+				1A0000000000000000000015 /* LocationUsageStore.swift */,
+				1A0000000000000000000016 /* TripMonitor.swift */,
 			);
 			path = Homu;
 			sourceTree = "<group>";
@@ -136,9 +142,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				1A0000000000000000000001 /* HomuApp.swift in Sources */,
-				2FEF12FA305E0CC700C88355 /* Secrets.swift in Sources */,
 				1A0000000000000000000002 /* ContentView.swift in Sources */,
 				1A0000000000000000000003 /* LocationManager.swift in Sources */,
+				1A0000000000000000000004 /* LocationSelection.swift in Sources */,
+				1A0000000000000000000005 /* LocationUsageStore.swift in Sources */,
+				1A0000000000000000000006 /* TripMonitor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -256,7 +264,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Homu;
+				INFOPLIST_KEY_MBXAccessToken = "$(MAPBOX_ACCESS_TOKEN)";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Homu uses your location to show where you are on the map.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Homu monitors your active trip in the background to alert you near your station and when you arrive.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -283,7 +293,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Homu;
+				INFOPLIST_KEY_MBXAccessToken = "$(MAPBOX_ACCESS_TOKEN)";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Homu uses your location to show where you are on the map.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Homu monitors your active trip in the background to alert you near your station and when you arrive.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
