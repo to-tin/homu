@@ -1,5 +1,6 @@
 "Search stations" = "駅を検索";
 "Cancel trip" = "移動をキャンセル";
+"Center on your location" = "現在地を中央に表示";
 "Unable to Start Trip" = "移動を開始できません";
 "OK" = "OK";
 "Mapbox Token Required" = "Mapboxトークンが必要です";

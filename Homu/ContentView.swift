@@ -153,6 +153,34 @@ struct ContentView: View {
                 Spacer(minLength: 0)
             }
 
+            if !isSearchActive {
+                VStack {
+                    Spacer()
+
+                    HStack {
+                        Spacer()
+
+                        Button(action: centerOnUser) {
+                            Image(systemName: "location.fill")
+                                .font(.system(size: 19, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 48, height: 48)
+                                .background(Color.white.opacity(0.94), in: Circle())
+                                .overlay {
+                                    Circle()
+                                        .strokeBorder(homuWaterBlue.opacity(0.8), lineWidth: 1)
+                                }
+                                .shadow(color: .black.opacity(0.15), radius: 7, y: 2)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(L10n.centerOnUserLocation)
+                    }
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 18)
+                }
+                .transition(.opacity)
+            }
+
             if tripMonitor.activeTrip != nil {
                 GeometryReader { geometry in
                     Button(action: cancelTrip) {
@@ -222,6 +250,16 @@ struct ContentView: View {
         cancellationHandler.cancelTrip()
         pendingTripDestination = nil
         resetSearchInput()
+    }
+
+    private func centerOnUser() {
+        searchModel.locationManager.requestAccess()
+        withViewportAnimation(.default(maxDuration: 1)) {
+            viewport = .followPuck(
+                zoom: 13,
+                bearing: .constant(0)
+            )
+        }
     }
 
     private func resetSearchInput() {

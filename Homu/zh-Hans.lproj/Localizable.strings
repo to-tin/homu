@@ -1,5 +1,6 @@
 "Search stations" = "搜索车站";
 "Cancel trip" = "取消行程";
+"Center on your location" = "以当前位置为中心";
 "Unable to Start Trip" = "无法开始行程";
 "OK" = "确定";
 "Mapbox Token Required" = "需要Mapbox令牌";
