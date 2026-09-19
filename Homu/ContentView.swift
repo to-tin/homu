@@ -66,6 +66,7 @@ struct ContentView: View {
                     }
                     .ornamentOptions(OrnamentOptions(
                         scaleBar: ScaleBarViewOptions(visibility: .hidden),
+                        compass: CompassViewOptions(visibility: .hidden),
                         logo: LogoViewOptions(margins: CGPoint(x: -1000, y: -1000)),
                         attributionButton: AttributionButtonOptions(margins: CGPoint(x: -1000, y: -1000))
                     ))
