@@ -5,6 +5,7 @@ import SwiftUI
 private let tokyo = CLLocationCoordinate2D(latitude: 35.6812, longitude: 139.7671)
 private let homuMapBackground = Color(red: 234.0 / 255.0, green: 242.0 / 255.0, blue: 251.0 / 255.0)
 private let homuWaterBlue = Color(red: 169.0 / 255.0, green: 206.0 / 255.0, blue: 236.0 / 255.0)
+private let homuPinRed = Color(red: 174.0 / 255.0, green: 88.0 / 255.0, blue: 84.0 / 255.0)
 
 struct ContentView: View {
     @EnvironmentObject private var tripMonitor: TripMonitor
@@ -39,7 +40,18 @@ struct ContentView: View {
     private var map: some View {
         ZStack {
             MapReader { proxy in
-                Map(initialViewport: .camera(center: tokyo, zoom: 5))
+                Map(initialViewport: .camera(center: tokyo, zoom: 5)) {
+                    if let destination = displayedTripDestination {
+                        MapViewAnnotation(coordinate: destination.coordinate) {
+                            SelectedDestinationPin(destinationName: destination.name)
+                                .id(destination.id)
+                        }
+                        .allowOverlap(true)
+                        .variableAnchors([
+                            ViewAnnotationAnchorConfig(anchor: .bottom)
+                        ])
+                    }
+                }
                     .mapStyle(.light)
                     .onStyleLoaded { _ in
                         guard let map = proxy.map else { return }
@@ -230,6 +242,20 @@ private struct TripInProgressBanner: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Trip in progress to \(destinationName)")
+    }
+}
+
+private struct SelectedDestinationPin: View {
+    let destinationName: String
+
+    var body: some View {
+        Image(systemName: "mappin.circle.fill")
+            .font(.system(size: 34, weight: .semibold))
+            .symbolRenderingMode(.palette)
+            .foregroundStyle(homuPinRed, Color.white)
+            .padding(8)
+            .shadow(color: .black.opacity(0.18), radius: 4, y: 2)
+            .accessibilityLabel("Selected station: \(destinationName)")
     }
 }
 
