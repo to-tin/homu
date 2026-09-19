@@ -3,11 +3,21 @@ import MapboxMaps
 import SwiftUI
 
 private let tokyo = CLLocationCoordinate2D(latitude: 35.6812, longitude: 139.7671)
+private let homuMapBackground = Color(red: 234.0 / 255.0, green: 242.0 / 255.0, blue: 251.0 / 255.0)
+private let homuWaterBlue = Color(red: 169.0 / 255.0, green: 206.0 / 255.0, blue: 236.0 / 255.0)
 
 struct ContentView: View {
+    @EnvironmentObject private var tripMonitor: TripMonitor
     @StateObject private var searchModel = StationSearchViewModel()
     @State private var isSearchActive = false
+    @State private var pendingTripDestination: LocationSelection?
+    @State private var tripErrorMessage = ""
+    @State private var isTripErrorPresented = false
     @FocusState private var searchFocused: Bool
+
+    private var displayedTripDestination: LocationSelection? {
+        tripMonitor.activeTrip?.destination ?? pendingTripDestination
+    }
 
     var body: some View {
         if hasMapboxAccessToken {
@@ -49,70 +59,83 @@ struct ContentView: View {
             }
 
             VStack(spacing: 0) {
-                HStack(spacing: 8) {
-                    HStack(spacing: 10) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(.secondary)
-                            .frame(width: 16, alignment: .leading)
-                        ZStack(alignment: .leading) {
-                            if searchModel.query.isEmpty && !searchFocused {
-                                Typewriter(sequences: ["Search stations", "駅を検索"])
-                                    .foregroundStyle(.secondary)
-                                    .allowsHitTesting(false)
-                            }
-                            TextField("", text: $searchModel.query)
-                                .textFieldStyle(.plain)
+                if let destination = displayedTripDestination {
+                    TripInProgressBanner(destinationName: destination.name)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                } else {
+                    HStack(spacing: 8) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "magnifyingglass")
                                 .foregroundStyle(.secondary)
-                                .tint(.secondary)
-                                .focused($searchFocused)
-                                .disabled(!isSearchActive)
-                                .accessibilityLabel("Search stations")
+                                .frame(width: 16, alignment: .leading)
+                            ZStack(alignment: .leading) {
+                                if searchModel.query.isEmpty && !searchFocused {
+                                    Typewriter(sequences: ["Search stations", "駅を検索"])
+                                        .foregroundStyle(.secondary)
+                                        .allowsHitTesting(false)
+                                }
+                                TextField("", text: $searchModel.query)
+                                    .textFieldStyle(.plain)
+                                    .foregroundStyle(.secondary)
+                                    .tint(.secondary)
+                                    .focused($searchFocused)
+                                    .disabled(!isSearchActive)
+                                    .accessibilityLabel("Search stations")
+                            }
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .background(Color.white, in: Capsule())
+                        .overlay(
+                            Capsule().strokeBorder(.primary.opacity(isSearchActive ? 0.08 : 0), lineWidth: 0.5)
+                        )
+                        .shadow(color: .black.opacity(isSearchActive ? 0 : 0.12), radius: 10, y: 2)
+                        .contentShape(Capsule())
+                        .onTapGesture { activate() }
+
+                        if isSearchActive {
+                            Button(action: deactivate) {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 36, height: 36)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .transition(.opacity.combined(with: .move(edge: .trailing)))
                         }
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 12)
-                    .background(Color.white, in: Capsule())
-                    .overlay(
-                        Capsule().strokeBorder(.primary.opacity(isSearchActive ? 0.08 : 0), lineWidth: 0.5)
-                    )
-                    .shadow(color: .black.opacity(isSearchActive ? 0 : 0.12), radius: 10, y: 2)
-                    .contentShape(Capsule())
-                    .onTapGesture { activate() }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
 
                     if isSearchActive {
-                        Button(action: deactivate) {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundStyle(.secondary)
-                                .frame(width: 36, height: 36)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .transition(.opacity.combined(with: .move(edge: .trailing)))
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-
-                if isSearchActive {
-                    ResultsList(
-                        query: searchModel.query,
-                        recentDestinations: searchModel.recentDestinations,
-                        stations: searchModel.stationResults,
-                        isUsingCurrentLocation: searchModel.isUsingCurrentLocation,
-                        isLoading: searchModel.isLoading,
-                        errorMessage: searchModel.errorMessage,
-                        onPick: pick
-                    )
+                        ResultsList(
+                            query: searchModel.query,
+                            recentDestinations: searchModel.recentDestinations,
+                            stations: searchModel.stationResults,
+                            isUsingCurrentLocation: searchModel.isUsingCurrentLocation,
+                            isLoading: searchModel.isLoading,
+                            errorMessage: searchModel.errorMessage,
+                            onPick: pick
+                        )
                         .transition(.opacity)
+                    }
                 }
 
                 Spacer(minLength: 0)
             }
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.88), value: isSearchActive)
+        .animation(.spring(response: 0.45, dampingFraction: 0.9), value: displayedTripDestination?.id)
         .onChange(of: searchModel.query) {
             searchModel.queryDidChange()
+        }
+        .alert("Unable to Start Trip", isPresented: $isTripErrorPresented) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(tripErrorMessage)
         }
     }
 
@@ -141,6 +164,72 @@ struct ContentView: View {
         isSearchActive = false
         searchModel.select(station)
         searchModel.deactivate(clearQuery: false)
+        pendingTripDestination = station
+
+        Task {
+            do {
+                try await tripMonitor.startTrip(to: station)
+                pendingTripDestination = nil
+            } catch {
+                pendingTripDestination = nil
+                tripErrorMessage = error.localizedDescription
+                isTripErrorPresented = true
+            }
+        }
+    }
+}
+
+private struct TripInProgressBanner: View {
+    let destinationName: String
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isPulsing = false
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "tram.fill")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 32, height: 32)
+                .background(homuWaterBlue.opacity(0.55), in: Circle())
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Trip In Progress")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                Text(destinationName)
+                    .font(.caption)
+                    .foregroundStyle(.secondary.opacity(0.8))
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 8)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(homuMapBackground.opacity(0.97), in: Capsule())
+        .overlay {
+            Capsule()
+                .strokeBorder(homuWaterBlue.opacity(0.9), lineWidth: 1)
+        }
+        .shadow(
+            color: homuWaterBlue.opacity(isPulsing ? 0.42 : 0.2),
+            radius: isPulsing ? 12 : 7,
+            y: 2
+        )
+        .scaleEffect(reduceMotion ? 1 : (isPulsing ? 1.008 : 0.995))
+        .opacity(reduceMotion ? 1 : (isPulsing ? 1 : 0.94))
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
+                isPulsing = true
+            }
+        }
+        .onDisappear {
+            isPulsing = false
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Trip in progress to \(destinationName)")
     }
 }
 
