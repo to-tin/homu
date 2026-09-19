@@ -13,6 +13,9 @@ protocol LocationUsageStoring: Sendable {
     @discardableResult
     func recordSelection(_ location: LocationSelection, at date: Date) async throws -> Int
 
+    @discardableResult
+    func recordArrival(_ location: LocationSelection, at date: Date) async throws -> Int
+
     func usageCount(for locationID: String, since date: Date) async throws -> Int
 
     func topLocations(limit: Int, since date: Date) async throws -> [LocationUsageSummary]
@@ -24,6 +27,11 @@ extension LocationUsageStoring {
     @discardableResult
     func recordSelection(_ location: LocationSelection) async throws -> Int {
         try await recordSelection(location, at: .now)
+    }
+
+    @discardableResult
+    func recordArrival(_ location: LocationSelection) async throws -> Int {
+        try await recordArrival(location, at: .now)
     }
 
     func topLocationsForPastWeek(limit: Int = 5) async throws -> [LocationUsageSummary] {
@@ -46,6 +54,23 @@ struct LocationSelectionHandler: Sendable {
     @discardableResult
     func didSelect(_ location: LocationSelection) async throws -> Int {
         try await usageStore.recordSelection(location)
+    }
+}
+
+struct TripArrivalHandler: Sendable {
+    private let usageStore: any LocationUsageStoring
+
+    static func live() throws -> TripArrivalHandler {
+        try TripArrivalHandler(usageStore: LocalLocationUsageStore.makeDefault())
+    }
+
+    init(usageStore: any LocationUsageStoring) {
+        self.usageStore = usageStore
+    }
+
+    @discardableResult
+    func didArrive(at location: LocationSelection) async throws -> Int {
+        try await usageStore.recordArrival(location)
     }
 }
 
@@ -109,9 +134,22 @@ actor LocalLocationUsageStore: LocationUsageStoring {
 
                 CREATE INDEX IF NOT EXISTS location_usage_events_date
                 ON location_usage_events(used_at);
+
+                CREATE TABLE IF NOT EXISTS location_selection_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    location_id TEXT NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+                    selected_at REAL NOT NULL
+                );
+
+                CREATE INDEX IF NOT EXISTS location_selection_events_location_date
+                ON location_selection_events(location_id, selected_at);
+
+                CREATE INDEX IF NOT EXISTS location_selection_events_date
+                ON location_selection_events(selected_at);
                 """,
                 on: connection
             )
+            try Self.migrateSelectionEventsIfNeeded(on: connection)
         } catch {
             sqlite3_close(connection)
             throw error
@@ -124,6 +162,25 @@ actor LocalLocationUsageStore: LocationUsageStoring {
 
     @discardableResult
     func recordSelection(_ location: LocationSelection, at date: Date) async throws -> Int {
+        try execute("BEGIN IMMEDIATE TRANSACTION;")
+
+        do {
+            try upsert(location, at: date)
+            try insertSelectionEvent(for: location.id, at: date)
+            let count = try usageCountSynchronously(
+                for: location.id,
+                since: date.addingTimeInterval(-.oneWeek)
+            )
+            try execute("COMMIT;")
+            return count
+        } catch {
+            try? execute("ROLLBACK;")
+            throw error
+        }
+    }
+
+    @discardableResult
+    func recordArrival(_ location: LocationSelection, at date: Date) async throws -> Int {
         try execute("BEGIN IMMEDIATE TRANSACTION;")
 
         do {
@@ -239,12 +296,12 @@ actor LocalLocationUsageStore: LocationUsageStoring {
                 locations.name,
                 locations.latitude,
                 locations.longitude,
-                COUNT(location_usage_events.id) AS usage_count,
-                MAX(location_usage_events.used_at) AS last_used_at
-            FROM location_usage_events
-            JOIN locations ON locations.id = location_usage_events.location_id
+                COUNT(location_selection_events.id) AS selection_count,
+                MAX(location_selection_events.selected_at) AS last_selected_at
+            FROM location_selection_events
+            JOIN locations ON locations.id = location_selection_events.location_id
             GROUP BY locations.id
-            ORDER BY last_used_at DESC, locations.name COLLATE NOCASE ASC
+            ORDER BY last_selected_at DESC, locations.name COLLATE NOCASE ASC
             LIMIT ?;
             """
         )
@@ -328,6 +385,20 @@ actor LocalLocationUsageStore: LocationUsageStoring {
         }
     }
 
+    private func insertSelectionEvent(for locationID: String, at date: Date) throws {
+        let statement = try prepare(
+            "INSERT INTO location_selection_events (location_id, selected_at) VALUES (?, ?);"
+        )
+        defer { sqlite3_finalize(statement) }
+
+        try bind(locationID, at: 1, to: statement)
+        sqlite3_bind_double(statement, 2, date.timeIntervalSince1970)
+
+        guard sqlite3_step(statement) == SQLITE_DONE else {
+            throw databaseError()
+        }
+    }
+
     private func execute(_ sql: String) throws {
         try Self.execute(sql, on: database)
     }
@@ -341,6 +412,41 @@ actor LocalLocationUsageStore: LocationUsageStoring {
                 ?? String(cString: sqlite3_errmsg(database))
             sqlite3_free(errorMessage)
             throw LocationUsageStoreError.queryFailed(message)
+        }
+    }
+
+    private static func migrateSelectionEventsIfNeeded(on database: OpaquePointer) throws {
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(database, "PRAGMA user_version;", -1, &statement, nil) == SQLITE_OK,
+              let statement else {
+            throw LocationUsageStoreError.queryFailed(String(cString: sqlite3_errmsg(database)))
+        }
+
+        guard sqlite3_step(statement) == SQLITE_ROW else {
+            sqlite3_finalize(statement)
+            throw LocationUsageStoreError.queryFailed(String(cString: sqlite3_errmsg(database)))
+        }
+
+        let schemaVersion = sqlite3_column_int(statement, 0)
+        sqlite3_finalize(statement)
+
+        guard schemaVersion < 2 else { return }
+
+        try execute("BEGIN IMMEDIATE TRANSACTION;", on: database)
+        do {
+            try execute(
+                """
+                INSERT INTO location_selection_events (location_id, selected_at)
+                SELECT location_id, used_at FROM location_usage_events;
+                DELETE FROM location_usage_events;
+                PRAGMA user_version = 2;
+                """,
+                on: database
+            )
+            try execute("COMMIT;", on: database)
+        } catch {
+            try? execute("ROLLBACK;", on: database)
+            throw error
         }
     }
 

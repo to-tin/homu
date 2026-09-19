@@ -57,15 +57,19 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
     private let locationManager: CLLocationManager
     private let notificationCenter: UNUserNotificationCenter
     private let defaults: UserDefaults
+    private let arrivalHandler: TripArrivalHandler?
+    private var completingTripID: UUID?
 
     init(
         locationManager: CLLocationManager = CLLocationManager(),
         notificationCenter: UNUserNotificationCenter = .current(),
-        defaults: UserDefaults = .standard
+        defaults: UserDefaults = .standard,
+        arrivalHandler: TripArrivalHandler? = nil
     ) {
         self.locationManager = locationManager
         self.notificationCenter = notificationCenter
         self.defaults = defaults
+        self.arrivalHandler = arrivalHandler
 
         if let data = defaults.data(forKey: Self.persistedTripKey) {
             activeTrip = try? JSONDecoder().decode(ActiveTrip.self, from: data)
@@ -74,6 +78,10 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
         super.init()
         locationManager.delegate = self
         notificationCenter.delegate = self
+
+        if let activeTrip {
+            startArrivalMonitoring(for: activeTrip)
+        }
     }
 
     func startTrip(to destination: LocationSelection) async throws {
@@ -107,6 +115,7 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
 
         do {
             try await scheduleNotifications(for: trip)
+            startArrivalMonitoring(for: trip)
         } catch {
             endTrip()
             throw error
@@ -117,12 +126,20 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
     func endTrip() -> Bool {
         guard let trip = activeTrip else { return false }
 
-        let identifiers = Proximity.allCases.map { notificationID(for: $0, tripID: trip.id) }
-        notificationCenter.removePendingNotificationRequests(withIdentifiers: identifiers)
-        notificationCenter.removeDeliveredNotifications(withIdentifiers: identifiers)
+        finishTrip(trip, preservingArrivalNotification: false)
+        return true
+    }
+
+    private func finishTrip(_ trip: ActiveTrip, preservingArrivalNotification: Bool) {
+        locationManager.stopMonitoring(for: arrivalRegion(for: trip))
+
+        let proximities: [Proximity] = preservingArrivalNotification ? [.near] : Proximity.allCases
+        let notificationIdentifiers = proximities.map { notificationID(for: $0, tripID: trip.id) }
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: notificationIdentifiers)
+        notificationCenter.removeDeliveredNotifications(withIdentifiers: notificationIdentifiers)
         defaults.removeObject(forKey: Self.persistedTripKey)
         activeTrip = nil
-        return true
+        completingTripID = nil
     }
 
     private func scheduleNotifications(for trip: ActiveTrip) async throws {
@@ -162,6 +179,43 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
         "trip.\(tripID.uuidString).\(proximity.rawValue)"
     }
 
+    private func arrivalMonitoringID(for tripID: UUID) -> String {
+        "trip.\(tripID.uuidString).completion"
+    }
+
+    private func arrivalRegion(for trip: ActiveTrip) -> CLCircularRegion {
+        let region = CLCircularRegion(
+            center: trip.destination.coordinate,
+            radius: Proximity.arrived.radius,
+            identifier: arrivalMonitoringID(for: trip.id)
+        )
+        region.notifyOnEntry = true
+        region.notifyOnExit = false
+        return region
+    }
+
+    private func startArrivalMonitoring(for trip: ActiveTrip) {
+        locationManager.startMonitoring(for: arrivalRegion(for: trip))
+    }
+
+    private func completeTripIfArrived(notificationIdentifier: String? = nil) async {
+        guard let trip = activeTrip,
+              completingTripID != trip.id,
+              notificationIdentifier == nil ||
+                notificationIdentifier == notificationID(for: .arrived, tripID: trip.id) else {
+            return
+        }
+
+        completingTripID = trip.id
+
+        if let arrivalHandler {
+            _ = try? await arrivalHandler.didArrive(at: trip.destination)
+        }
+
+        guard activeTrip?.id == trip.id else { return }
+        finishTrip(trip, preservingArrivalNotification: true)
+    }
+
     private func persist(_ trip: ActiveTrip) {
         guard let data = try? JSONEncoder().encode(trip) else { return }
         defaults.set(data, forKey: Self.persistedTripKey)
@@ -170,13 +224,28 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
 
 extension TripMonitor: CLLocationManagerDelegate {
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        guard manager.authorizationStatus == .denied ||
-                manager.authorizationStatus == .restricted else {
-            return
-        }
-
         Task { @MainActor in
-            endTrip()
+            switch manager.authorizationStatus {
+            case .authorizedAlways:
+                if let activeTrip {
+                    startArrivalMonitoring(for: activeTrip)
+                }
+            case .denied, .restricted:
+                endTrip()
+            default:
+                break
+            }
+        }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
+        Task { @MainActor in
+            guard let activeTrip,
+                  region.identifier == arrivalMonitoringID(for: activeTrip.id) else {
+                return
+            }
+
+            await completeTripIfArrived()
         }
     }
 }
@@ -192,10 +261,26 @@ extension TripMonitor: UNUserNotificationCenterDelegate {
         if isTripNotification {
             Task { @MainActor in
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
+                await completeTripIfArrived(
+                    notificationIdentifier: notification.request.identifier
+                )
             }
         }
 
         completionHandler([.banner, .sound])
+    }
+
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        Task { @MainActor in
+            await completeTripIfArrived(
+                notificationIdentifier: response.notification.request.identifier
+            )
+            completionHandler()
+        }
     }
 }
 
