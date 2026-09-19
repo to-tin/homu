@@ -28,6 +28,8 @@ To test a location in Simulator, choose **Features > Location** and select a pre
 
 `LocalLocationUsageStore` stores selections and completed arrivals separately in an on-device SQLite database. Selecting a search result records it for the recent-destinations list. Entering the destination's arrival region records a usage event for rolling weekly frequency queries and ends the trip. Cancelling a trip clears its monitoring and notifications without recording a usage event.
 
+While a trip is active, the map banner advances from trip-in-progress to station-approaching status as the user enters the near region. Arrival immediately removes the cancel control, changes the banner to its arrived state for five seconds, and then returns the map to destination search.
+
 ## Trip notifications
 
 Selecting a station starts the trip, places a pin at the station, and replaces the search field with a gently pulsing trip-in-progress banner. `TripMonitor.startTrip(to:)` schedules one-shot location notifications at 1 km and 150 m from the selected station. `TripMonitor.endTrip()` performs the core cleanup by clearing the persisted trip and removing its notifications, which also removes the pin and restores the search field. `TripCancellationHandler.cancelTrip()` is an idempotent wrapper intended for a future cancel button, leaving room for cancellation-specific behavior without changing the underlying trip lifecycle. Notifications use the default system sound, which follows the user's notification haptic settings; foreground delivery also triggers notification feedback directly.

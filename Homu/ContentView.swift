@@ -20,7 +20,11 @@ struct ContentView: View {
     @FocusState private var searchFocused: Bool
 
     private var displayedTripDestination: LocationSelection? {
-        tripMonitor.activeTrip?.destination ?? pendingTripDestination
+        tripMonitor.tripPresentation?.destination ?? pendingTripDestination
+    }
+
+    private var displayedTripStatus: TripStatus {
+        tripMonitor.tripPresentation?.status ?? .inProgress
     }
 
     var body: some View {
@@ -79,7 +83,10 @@ struct ContentView: View {
 
             VStack(spacing: 0) {
                 if let destination = displayedTripDestination {
-                    TripInProgressBanner(destinationName: destination.name)
+                    TripStatusBanner(
+                        destinationName: destination.name,
+                        status: displayedTripStatus
+                    )
                         .padding(.horizontal, 16)
                         .padding(.top, 8)
                         .transition(.opacity.combined(with: .scale(scale: 0.96)))
@@ -172,6 +179,7 @@ struct ContentView: View {
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.88), value: isSearchActive)
         .animation(.spring(response: 0.45, dampingFraction: 0.9), value: displayedTripDestination?.id)
+        .animation(.easeInOut(duration: 0.25), value: tripMonitor.tripPresentation?.status)
         .onAppear {
             searchModel.locationManager.requestAccess()
         }
@@ -231,22 +239,45 @@ struct ContentView: View {
     }
 }
 
-private struct TripInProgressBanner: View {
+private struct TripStatusBanner: View {
     let destinationName: String
+    let status: TripStatus
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isPulsing = false
 
+    private var statusText: String {
+        switch status {
+        case .inProgress:
+            L10n.tripInProgress
+        case .near:
+            L10n.stationApproachingTitle
+        case .arrived:
+            L10n.arrivedTitle
+        }
+    }
+
+    private var statusSymbol: String {
+        switch status {
+        case .inProgress:
+            "tram.fill"
+        case .near:
+            "location.fill"
+        case .arrived:
+            "checkmark"
+        }
+    }
+
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "tram.fill")
+            Image(systemName: statusSymbol)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .frame(width: 32, height: 32)
                 .background(homuWaterBlue.opacity(0.55), in: Circle())
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(L10n.tripInProgress)
+                Text(statusText)
                     .font(.headline)
                     .foregroundStyle(.secondary)
                 Text(destinationName)
@@ -281,7 +312,7 @@ private struct TripInProgressBanner: View {
             isPulsing = false
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(L10n.tripInProgress(to: destinationName))
+        .accessibilityLabel("\(statusText), \(destinationName)")
     }
 }
 
