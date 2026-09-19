@@ -22,11 +22,11 @@ To test a location in Simulator, choose **Features > Location** and select a pre
 
 ## Location architecture
 
-`LocationManager` implements the `LocationProviding` protocol and publishes the latest one-shot location. Future features such as station autocomplete can depend on that protocol, observe `locationPublisher`, and rank results without coupling search logic to Core Location.
+`LocationManager` implements the `LocationProviding` protocol and publishes the latest one-shot location. `AppleMapsStationSearchService` searches Apple Maps within Tokyo and ranks matching stations by distance from that location. `StationSearchViewModel` debounces text input and keeps MapKit, Core Location, and the SwiftUI search view decoupled.
 
 ## Location usage storage
 
-`LocalLocationUsageStore` records each selected location in an on-device SQLite database. `LocationSelectionHandler.didSelect(_:)` is the binding for a future autocomplete selection callback; it returns that location's rolling seven-day usage count. The store can also return the five most-used locations for any rolling date window.
+`LocalLocationUsageStore` records each selected location in an on-device SQLite database. Selecting a search result calls `LocationSelectionHandler.didSelect(_:)`; reopening search shows up to five unique destinations in most-recently-used order. The existing rolling-window APIs remain available for future most-frequent-location queries.
 
 ## Trip notifications
 

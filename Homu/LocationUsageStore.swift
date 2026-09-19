@@ -16,6 +16,8 @@ protocol LocationUsageStoring: Sendable {
     func usageCount(for locationID: String, since date: Date) async throws -> Int
 
     func topLocations(limit: Int, since date: Date) async throws -> [LocationUsageSummary]
+
+    func recentLocations(limit: Int) async throws -> [LocationUsageSummary]
 }
 
 extension LocationUsageStoring {
@@ -127,7 +129,7 @@ actor LocalLocationUsageStore: LocationUsageStoring {
         do {
             try upsert(location, at: date)
             try insertUsageEvent(for: location.id, at: date)
-            let count = try await usageCount(
+            let count = try usageCountSynchronously(
                 for: location.id,
                 since: date.addingTimeInterval(-.oneWeek)
             )
@@ -140,6 +142,10 @@ actor LocalLocationUsageStore: LocationUsageStoring {
     }
 
     func usageCount(for locationID: String, since date: Date) async throws -> Int {
+        try usageCountSynchronously(for: locationID, since: date)
+    }
+
+    private func usageCountSynchronously(for locationID: String, since date: Date) throws -> Int {
         let statement = try prepare(
             """
             SELECT COUNT(*)
@@ -184,6 +190,67 @@ actor LocalLocationUsageStore: LocationUsageStoring {
 
         sqlite3_bind_double(statement, 1, date.timeIntervalSince1970)
         sqlite3_bind_int(statement, 2, Int32(safeLimit))
+
+        var summaries: [LocationUsageSummary] = []
+
+        while true {
+            let result = sqlite3_step(statement)
+            guard result == SQLITE_ROW else {
+                if result == SQLITE_DONE {
+                    break
+                }
+
+                throw databaseError()
+            }
+
+            guard
+                let idText = sqlite3_column_text(statement, 0),
+                let nameText = sqlite3_column_text(statement, 1)
+            else {
+                throw LocationUsageStoreError.invalidStoredData
+            }
+
+            let location = LocationSelection(
+                id: String(cString: idText),
+                name: String(cString: nameText),
+                latitude: sqlite3_column_double(statement, 2),
+                longitude: sqlite3_column_double(statement, 3)
+            )
+            summaries.append(
+                LocationUsageSummary(
+                    location: location,
+                    usageCount: Int(sqlite3_column_int64(statement, 4)),
+                    lastUsedAt: Date(timeIntervalSince1970: sqlite3_column_double(statement, 5))
+                )
+            )
+        }
+
+        return summaries
+    }
+
+    func recentLocations(limit: Int) async throws -> [LocationUsageSummary] {
+        let safeLimit = max(0, min(limit, 100))
+        guard safeLimit > 0 else { return [] }
+
+        let statement = try prepare(
+            """
+            SELECT
+                locations.id,
+                locations.name,
+                locations.latitude,
+                locations.longitude,
+                COUNT(location_usage_events.id) AS usage_count,
+                MAX(location_usage_events.used_at) AS last_used_at
+            FROM location_usage_events
+            JOIN locations ON locations.id = location_usage_events.location_id
+            GROUP BY locations.id
+            ORDER BY last_used_at DESC, locations.name COLLATE NOCASE ASC
+            LIMIT ?;
+            """
+        )
+        defer { sqlite3_finalize(statement) }
+
+        sqlite3_bind_int(statement, 1, Int32(safeLimit))
 
         var summaries: [LocationUsageSummary] = []
 

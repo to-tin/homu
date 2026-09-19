@@ -4,27 +4,10 @@ import SwiftUI
 
 private let tokyo = CLLocationCoordinate2D(latitude: 35.6812, longitude: 139.7671)
 
-private let mockStations = [
-    "Shibuya", "Shinjuku", "Tokyo", "Akihabara", "Ikebukuro",
-    "Ueno", "Ginza", "Roppongi", "Harajuku", "Ebisu",
-    "Meguro", "Nakano", "Kichijoji", "Asakusa", "Odaiba"
-]
-
-private let savedStations: Set<String> = ["Shibuya", "Tokyo", "Harajuku"]
-
 struct ContentView: View {
-    @State private var query = ""
+    @StateObject private var searchModel = StationSearchViewModel()
     @State private var isSearchActive = false
     @FocusState private var searchFocused: Bool
-
-    private var placeholder: String {
-        Locale.current.language.languageCode?.identifier == "ja" ? "駅を検索" : "Search stations"
-    }
-
-    private var results: [String] {
-        guard !query.isEmpty else { return [] }
-        return mockStations.filter { $0.lowercased().contains(query.lowercased()) }
-    }
 
     var body: some View {
         if hasMapboxAccessToken {
@@ -72,17 +55,18 @@ struct ContentView: View {
                             .foregroundStyle(.secondary)
                             .frame(width: 16, alignment: .leading)
                         ZStack(alignment: .leading) {
-                            if query.isEmpty && !searchFocused {
-                                Typewriter(sequences: ["Shibuya", "駅を検索", "Tokyo Station", "Harajuku"])
+                            if searchModel.query.isEmpty && !searchFocused {
+                                Typewriter(sequences: ["Search stations", "駅を検索"])
                                     .foregroundStyle(.secondary)
                                     .allowsHitTesting(false)
                             }
-                            TextField("", text: $query)
+                            TextField("", text: $searchModel.query)
                                 .textFieldStyle(.plain)
                                 .foregroundStyle(.secondary)
                                 .tint(.secondary)
                                 .focused($searchFocused)
                                 .disabled(!isSearchActive)
+                                .accessibilityLabel("Search stations")
                         }
                     }
                     .padding(.horizontal, 14)
@@ -111,7 +95,15 @@ struct ContentView: View {
                 .padding(.top, 8)
 
                 if isSearchActive {
-                    ResultsList(items: results, onPick: pick)
+                    ResultsList(
+                        query: searchModel.query,
+                        recentDestinations: searchModel.recentDestinations,
+                        stations: searchModel.stationResults,
+                        isUsingCurrentLocation: searchModel.isUsingCurrentLocation,
+                        isLoading: searchModel.isLoading,
+                        errorMessage: searchModel.errorMessage,
+                        onPick: pick
+                    )
                         .transition(.opacity)
                 }
 
@@ -119,6 +111,9 @@ struct ContentView: View {
             }
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.88), value: isSearchActive)
+        .onChange(of: searchModel.query) {
+            searchModel.queryDidChange()
+        }
     }
 
     private var missingTokenView: some View {
@@ -131,18 +126,21 @@ struct ContentView: View {
 
     private func activate() {
         isSearchActive = true
+        searchModel.activate()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { searchFocused = true }
     }
 
     private func deactivate() {
         searchFocused = false
-        query = ""
         isSearchActive = false
+        searchModel.deactivate(clearQuery: true)
     }
 
-    private func pick(_ station: String) {
-        query = station
-        deactivate()
+    private func pick(_ station: LocationSelection) {
+        searchFocused = false
+        isSearchActive = false
+        searchModel.select(station)
+        searchModel.deactivate(clearQuery: false)
     }
 }
 
@@ -190,34 +188,107 @@ private struct Typewriter: View {
 }
 
 private struct ResultsList: View {
-    let items: [String]
-    let onPick: (String) -> Void
+    let query: String
+    let recentDestinations: [LocationSelection]
+    let stations: [LocationSelection]
+    let isUsingCurrentLocation: Bool
+    let isLoading: Bool
+    let errorMessage: String?
+    let onPick: (LocationSelection) -> Void
+
+    private var normalizedQuery: String {
+        query.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var visibleStations: [LocationSelection] {
+        stations
+    }
+
+    private var hasResults: Bool {
+        let hasRecentDestinations = normalizedQuery.isEmpty && !recentDestinations.isEmpty
+        return hasRecentDestinations || !visibleStations.isEmpty
+    }
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 0) {
-                ForEach(items, id: \.self) { item in
-                    Button {
-                        onPick(item)
-                    } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: "bookmark.fill")
-                                .font(.system(size: 14))
-                                .foregroundStyle(.secondary)
-                                .opacity(savedStations.contains(item) ? 1 : 0)
-                                .frame(width: 16, alignment: .leading)
-                            Text(item).foregroundStyle(.secondary)
-                            Spacer()
-                        }
-                        .padding(.leading, 30)
-                        .padding(.trailing, 20)
-                        .padding(.vertical, 14)
+            LazyVStack(alignment: .leading, spacing: 0) {
+                if normalizedQuery.isEmpty && !recentDestinations.isEmpty {
+                    sectionHeader("Recent Destinations")
+                    ForEach(recentDestinations) { destination in
+                        resultRow(destination, systemImage: "clock.arrow.circlepath")
                     }
-                    .buttonStyle(.plain)
-                    Divider().padding(.leading, 56)
+                }
+
+                if !visibleStations.isEmpty {
+                    sectionHeader(stationSectionTitle)
+                    ForEach(visibleStations) { station in
+                        resultRow(station, systemImage: "tram.fill")
+                    }
+                }
+
+                if isLoading {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                        Spacer()
+                    }
+                    .padding(.vertical, 24)
+                } else if let errorMessage, !hasResults {
+                    statusMessage(errorMessage)
+                } else if !hasResults {
+                    statusMessage(normalizedQuery.isEmpty ? "No Tokyo stations found." : "No stations match your search.")
                 }
             }
             .padding(.top, 12)
         }
+    }
+
+    private var stationSectionTitle: String {
+        if normalizedQuery.isEmpty && isUsingCurrentLocation {
+            return "Closest Tokyo Stations"
+        }
+
+        return "Tokyo Stations"
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .textCase(.uppercase)
+            .padding(.horizontal, 20)
+            .padding(.top, 14)
+            .padding(.bottom, 6)
+    }
+
+    @ViewBuilder
+    private func resultRow(_ destination: LocationSelection, systemImage: String) -> some View {
+        Button {
+            onPick(destination)
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 14))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 16, alignment: .leading)
+                Text(destination.name)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            .padding(.leading, 30)
+            .padding(.trailing, 20)
+            .padding(.vertical, 14)
+        }
+        .buttonStyle(.plain)
+        Divider().padding(.leading, 56)
+    }
+
+    private func statusMessage(_ message: String) -> some View {
+        Text(message)
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 28)
     }
 }
