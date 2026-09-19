@@ -186,6 +186,10 @@ struct ContentView: View {
         .onChange(of: searchModel.query) {
             searchModel.queryDidChange()
         }
+        .onChange(of: displayedTripDestination?.id) { previousDestinationID, destinationID in
+            guard previousDestinationID != nil, destinationID == nil else { return }
+            resetSearchInput()
+        }
         .alert(L10n.unableToStartTrip, isPresented: $isTripErrorPresented) {
             Button(L10n.okay, role: .cancel) {}
         } message: {
@@ -217,6 +221,13 @@ struct ContentView: View {
         let cancellationHandler = TripCancellationHandler(tripMonitor: tripMonitor)
         cancellationHandler.cancelTrip()
         pendingTripDestination = nil
+        resetSearchInput()
+    }
+
+    private func resetSearchInput() {
+        searchFocused = false
+        isSearchActive = false
+        searchModel.deactivate(clearQuery: true)
     }
 
     private func pick(_ station: LocationSelection) {
