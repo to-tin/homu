@@ -26,7 +26,7 @@ To test a location in Simulator, choose **Features > Location** and select a pre
 
 ## Location usage storage
 
-`LocalLocationUsageStore` records each selected location in an on-device SQLite database. Selecting a search result calls `LocationSelectionHandler.didSelect(_:)`; reopening search shows up to five unique destinations in most-recently-used order. The existing rolling-window APIs remain available for future most-frequent-location queries.
+`LocalLocationUsageStore` stores selections and completed arrivals separately in an on-device SQLite database. Selecting a search result records it for the recent-destinations list. Entering the destination's arrival region records a usage event for rolling weekly frequency queries and ends the trip. Cancelling a trip clears its monitoring and notifications without recording a usage event.
 
 ## Trip notifications
 
