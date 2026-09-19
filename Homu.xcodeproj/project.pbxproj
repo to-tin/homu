@@ -13,6 +13,8 @@
 		1A0000000000000000000004 /* LocationSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000014 /* LocationSelection.swift */; };
 		1A0000000000000000000005 /* LocationUsageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000015 /* LocationUsageStore.swift */; };
 		1A0000000000000000000006 /* TripMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000016 /* TripMonitor.swift */; };
+		1A0000000000000000000007 /* StationSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000000000000000000001B /* StationSearchService.swift */; };
+		1A0000000000000000000008 /* StationSearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000000000000000000001C /* StationSearchViewModel.swift */; };
 		2FEF12F8305E043000C88355 /* MapboxMaps in Frameworks */ = {isa = PBXBuildFile; productRef = 2FEF12F7305E043000C88355 /* MapboxMaps */; };
 /* End PBXBuildFile section */
 
@@ -27,6 +29,8 @@
 		1A0000000000000000000017 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
 		1A0000000000000000000019 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1A000000000000000000001A /* Local.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Local.xcconfig; sourceTree = "<group>"; };
+		1A000000000000000000001B /* StationSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationSearchService.swift; sourceTree = "<group>"; };
+		1A000000000000000000001C /* StationSearchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationSearchViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +63,8 @@
 				1A0000000000000000000014 /* LocationSelection.swift */,
 				1A0000000000000000000015 /* LocationUsageStore.swift */,
 				1A0000000000000000000016 /* TripMonitor.swift */,
+				1A000000000000000000001B /* StationSearchService.swift */,
+				1A000000000000000000001C /* StationSearchViewModel.swift */,
 				1A0000000000000000000019 /* Info.plist */,
 			);
 			path = Homu;
@@ -161,6 +167,8 @@
 				1A0000000000000000000004 /* LocationSelection.swift in Sources */,
 				1A0000000000000000000005 /* LocationUsageStore.swift in Sources */,
 				1A0000000000000000000006 /* TripMonitor.swift in Sources */,
+				1A0000000000000000000007 /* StationSearchService.swift in Sources */,
+				1A0000000000000000000008 /* StationSearchViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
