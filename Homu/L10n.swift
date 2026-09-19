@@ -3,6 +3,7 @@ import Foundation
 enum L10n {
     static let searchStations = String(localized: "Search stations")
     static let cancelTrip = String(localized: "Cancel trip")
+    static let centerOnUserLocation = String(localized: "Center on your location")
     static let unableToStartTrip = String(localized: "Unable to Start Trip")
     static let okay = String(localized: "OK")
     static let mapboxTokenRequired = String(localized: "Mapbox Token Required")

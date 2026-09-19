@@ -1,5 +1,6 @@
 "Search stations" = "Buscar estaciones";
 "Cancel trip" = "Cancelar viaje";
+"Center on your location" = "Centrar en tu ubicación";
 "Unable to Start Trip" = "No se pudo iniciar el viaje";
 "OK" = "Aceptar";
 "Mapbox Token Required" = "Se necesita un token de Mapbox";
