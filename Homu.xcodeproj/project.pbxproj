@@ -10,6 +10,8 @@
 		1A0000000000000000000001 /* HomuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000011 /* HomuApp.swift */; };
 		1A0000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000012 /* ContentView.swift */; };
 		1A0000000000000000000003 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000013 /* LocationManager.swift */; };
+		2FEF12F8305E043000C88355 /* MapboxMaps in Frameworks */ = {isa = PBXBuildFile; productRef = 2FEF12F7305E043000C88355 /* MapboxMaps */; };
+		2FEF12FA305E0CC700C88355 /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FEF12F9305E0CC700C88355 /* Secrets.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -17,6 +19,7 @@
 		1A0000000000000000000011 /* HomuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomuApp.swift; sourceTree = "<group>"; };
 		1A0000000000000000000012 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		1A0000000000000000000013 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
+		2FEF12F9305E0CC700C88355 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -24,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2FEF12F8305E043000C88355 /* MapboxMaps in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -44,6 +48,7 @@
 				1A0000000000000000000011 /* HomuApp.swift */,
 				1A0000000000000000000012 /* ContentView.swift */,
 				1A0000000000000000000013 /* LocationManager.swift */,
+				2FEF12F9305E0CC700C88355 /* Secrets.swift */,
 			);
 			path = Homu;
 			sourceTree = "<group>";
@@ -72,6 +77,9 @@
 			dependencies = (
 			);
 			name = Homu;
+			packageProductDependencies = (
+				2FEF12F7305E043000C88355 /* MapboxMaps */,
+			);
 			productName = Homu;
 			productReference = 1A0000000000000000000010 /* Homu.app */;
 			productType = "com.apple.product-type.application";
@@ -100,6 +108,9 @@
 				Base,
 			);
 			mainGroup = 1A0000000000000000000030;
+			packageReferences = (
+				2FEF12F6305E043000C88355 /* XCRemoteSwiftPackageReference "mapbox-maps-ios" */,
+			);
 			productRefGroup = 1A0000000000000000000032 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -125,6 +136,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1A0000000000000000000001 /* HomuApp.swift in Sources */,
+				2FEF12FA305E0CC700C88355 /* Secrets.swift in Sources */,
 				1A0000000000000000000002 /* ContentView.swift in Sources */,
 				1A0000000000000000000003 /* LocationManager.swift in Sources */,
 			);
@@ -311,6 +323,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		2FEF12F6305E043000C88355 /* XCRemoteSwiftPackageReference "mapbox-maps-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mapbox/mapbox-maps-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.31.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2FEF12F7305E043000C88355 /* MapboxMaps */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2FEF12F6305E043000C88355 /* XCRemoteSwiftPackageReference "mapbox-maps-ios" */;
+			productName = MapboxMaps;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1A0000000000000000000070 /* Project object */;
 }
