@@ -2,7 +2,6 @@ import CoreLocation
 import MapboxMaps
 import SwiftUI
 
-private let tokyo = CLLocationCoordinate2D(latitude: 35.6812, longitude: 139.7671)
 private let homuMapBackground = Color(red: 234.0 / 255.0, green: 242.0 / 255.0, blue: 251.0 / 255.0)
 private let homuWaterBlue = Color(red: 169.0 / 255.0, green: 206.0 / 255.0, blue: 236.0 / 255.0)
 private let homuPinRed = Color(red: 174.0 / 255.0, green: 88.0 / 255.0, blue: 84.0 / 255.0)
@@ -12,6 +11,10 @@ struct ContentView: View {
     @StateObject private var searchModel = StationSearchViewModel()
     @State private var isSearchActive = false
     @State private var pendingTripDestination: LocationSelection?
+    @State private var viewport: Viewport = .followPuck(
+        zoom: 13,
+        bearing: .constant(0)
+    )
     @State private var tripErrorMessage = ""
     @State private var isTripErrorPresented = false
     @FocusState private var searchFocused: Bool
@@ -40,7 +43,10 @@ struct ContentView: View {
     private var map: some View {
         ZStack {
             MapReader { proxy in
-                Map(initialViewport: .camera(center: tokyo, zoom: 5)) {
+                Map(viewport: $viewport) {
+                    Puck2D(bearing: .heading)
+                        .showsAccuracyRing(true)
+
                     if let destination = displayedTripDestination {
                         MapViewAnnotation(coordinate: destination.coordinate) {
                             SelectedDestinationPin(destinationName: destination.name)
@@ -141,6 +147,9 @@ struct ContentView: View {
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.88), value: isSearchActive)
         .animation(.spring(response: 0.45, dampingFraction: 0.9), value: displayedTripDestination?.id)
+        .onAppear {
+            searchModel.locationManager.requestAccess()
+        }
         .onChange(of: searchModel.query) {
             searchModel.queryDidChange()
         }
