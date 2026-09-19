@@ -144,6 +144,30 @@ struct ContentView: View {
 
                 Spacer(minLength: 0)
             }
+
+            if tripMonitor.activeTrip != nil {
+                GeometryReader { geometry in
+                    Button(action: cancelTrip) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 64, height: 64)
+                            .background(homuPinRed.opacity(0.72), in: Circle())
+                            .overlay {
+                                Circle()
+                                    .strokeBorder(.white.opacity(0.55), lineWidth: 1)
+                            }
+                            .shadow(color: homuPinRed.opacity(0.3), radius: 8, y: 3)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Cancel trip")
+                    .position(
+                        x: geometry.size.width / 2,
+                        y: geometry.size.height * 0.875
+                    )
+                }
+                .transition(.scale(scale: 0.85).combined(with: .opacity))
+            }
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.88), value: isSearchActive)
         .animation(.spring(response: 0.45, dampingFraction: 0.9), value: displayedTripDestination?.id)
@@ -178,6 +202,12 @@ struct ContentView: View {
         searchFocused = false
         isSearchActive = false
         searchModel.deactivate(clearQuery: true)
+    }
+
+    private func cancelTrip() {
+        let cancellationHandler = TripCancellationHandler(tripMonitor: tripMonitor)
+        cancellationHandler.cancelTrip()
+        pendingTripDestination = nil
     }
 
     private func pick(_ station: LocationSelection) {
