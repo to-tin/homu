@@ -116,7 +116,7 @@ final class StationSearchViewModel: ObservableObject {
             } catch is CancellationError {
                 return
             } catch {
-                self?.errorMessage = "The destination could not be saved."
+                self?.errorMessage = L10n.destinationSaveFailed
             }
         }
     }
@@ -141,7 +141,7 @@ final class StationSearchViewModel: ObservableObject {
                 return
             } catch {
                 self?.recentDestinations = []
-                self?.errorMessage = "Recent destinations are unavailable."
+                self?.errorMessage = L10n.recentDestinationsUnavailable
             }
         }
     }
@@ -181,7 +181,7 @@ final class StationSearchViewModel: ObservableObject {
                 guard let self, generation == searchGeneration else { return }
                 stationResults = []
                 isLoading = false
-                errorMessage = "Tokyo stations could not be loaded."
+                errorMessage = L10n.tokyoStationsLoadFailed
             }
         }
     }

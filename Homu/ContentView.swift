@@ -91,7 +91,7 @@ struct ContentView: View {
                                 .frame(width: 16, alignment: .leading)
                             ZStack(alignment: .leading) {
                                 if searchModel.query.isEmpty && !searchFocused {
-                                    Typewriter(sequences: ["Search stations", "駅を検索"])
+                                    Typewriter(sequences: [L10n.searchStations])
                                         .foregroundStyle(.secondary)
                                         .allowsHitTesting(false)
                                 }
@@ -101,7 +101,7 @@ struct ContentView: View {
                                     .tint(.secondary)
                                     .focused($searchFocused)
                                     .disabled(!isSearchActive)
-                                    .accessibilityLabel("Search stations")
+                                    .accessibilityLabel(L10n.searchStations)
                             }
                         }
                         .padding(.horizontal, 14)
@@ -161,7 +161,7 @@ struct ContentView: View {
                             .shadow(color: homuPinRed.opacity(0.3), radius: 8, y: 3)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Cancel trip")
+                    .accessibilityLabel(L10n.cancelTrip)
                     .position(
                         x: geometry.size.width / 2,
                         y: geometry.size.height * 0.875
@@ -178,8 +178,8 @@ struct ContentView: View {
         .onChange(of: searchModel.query) {
             searchModel.queryDidChange()
         }
-        .alert("Unable to Start Trip", isPresented: $isTripErrorPresented) {
-            Button("OK", role: .cancel) {}
+        .alert(L10n.unableToStartTrip, isPresented: $isTripErrorPresented) {
+            Button(L10n.okay, role: .cancel) {}
         } message: {
             Text(tripErrorMessage)
         }
@@ -187,9 +187,9 @@ struct ContentView: View {
 
     private var missingTokenView: some View {
         ContentUnavailableView {
-            Label("Mapbox Token Required", systemImage: "map")
+            Label(L10n.mapboxTokenRequired, systemImage: "map")
         } description: {
-            Text("Add your public Mapbox token to Config/Local.xcconfig, then rebuild the app.")
+            Text(L10n.mapboxTokenInstructions)
         }
     }
 
@@ -246,7 +246,7 @@ private struct TripInProgressBanner: View {
                 .background(homuWaterBlue.opacity(0.55), in: Circle())
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Trip In Progress")
+                Text(L10n.tripInProgress)
                     .font(.headline)
                     .foregroundStyle(.secondary)
                 Text(destinationName)
@@ -281,7 +281,7 @@ private struct TripInProgressBanner: View {
             isPulsing = false
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Trip in progress to \(destinationName)")
+        .accessibilityLabel(L10n.tripInProgress(to: destinationName))
     }
 }
 
@@ -295,7 +295,7 @@ private struct SelectedDestinationPin: View {
             .foregroundStyle(homuPinRed, Color.white)
             .padding(8)
             .shadow(color: .black.opacity(0.18), radius: 4, y: 2)
-            .accessibilityLabel("Selected station: \(destinationName)")
+            .accessibilityLabel(L10n.selectedStation(destinationName))
     }
 }
 
@@ -368,7 +368,7 @@ private struct ResultsList: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
                 if normalizedQuery.isEmpty && !recentDestinations.isEmpty {
-                    sectionHeader("Recent Destinations")
+                    sectionHeader(L10n.recentDestinations)
                     ForEach(recentDestinations) { destination in
                         resultRow(destination, systemImage: "clock.arrow.circlepath")
                     }
@@ -391,7 +391,7 @@ private struct ResultsList: View {
                 } else if let errorMessage, !hasResults {
                     statusMessage(errorMessage)
                 } else if !hasResults {
-                    statusMessage(normalizedQuery.isEmpty ? "No Tokyo stations found." : "No stations match your search.")
+                    statusMessage(normalizedQuery.isEmpty ? L10n.noTokyoStations : L10n.noMatchingStations)
                 }
             }
             .padding(.top, 12)
@@ -400,10 +400,10 @@ private struct ResultsList: View {
 
     private var stationSectionTitle: String {
         if normalizedQuery.isEmpty && isUsingCurrentLocation {
-            return "Closest Tokyo Stations"
+            return L10n.closestTokyoStations
         }
 
-        return "Tokyo Stations"
+        return L10n.tokyoStations
     }
 
     private func sectionHeader(_ title: String) -> some View {

@@ -374,11 +374,11 @@ private enum LocationUsageStoreError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unableToOpenDatabase(let message):
-            "Unable to open the location usage database: \(message)"
+            L10n.unableToOpenLocationDatabase(message)
         case .queryFailed(let message):
-            "The location usage database query failed: \(message)"
+            L10n.locationDatabaseQueryFailed(message)
         case .invalidStoredData:
-            "The location usage database contains invalid data."
+            L10n.invalidLocationData
         }
     }
 }

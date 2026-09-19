@@ -142,11 +142,11 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
 
             switch proximity {
             case .near:
-                content.title = "Your station is coming up"
-                content.body = "You're near \(trip.destination.name)."
+                content.title = L10n.stationApproachingTitle
+                content.body = L10n.stationIsNear(trip.destination.name)
             case .arrived:
-                content.title = "You've arrived"
-                content.body = "You're at \(trip.destination.name)."
+                content.title = L10n.arrivedTitle
+                content.body = L10n.arrived(at: trip.destination.name)
             }
 
             let request = UNNotificationRequest(
@@ -207,11 +207,11 @@ enum TripMonitorError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .locationPermissionDenied:
-            "Always-on location access is required for trip notifications."
+            L10n.alwaysOnLocationRequired
         case .notificationPermissionDenied:
-            "Notification access is required for trip alerts."
+            L10n.notificationAccessRequired
         case .regionMonitoringUnavailable:
-            "Location-based trip alerts aren't available on this device."
+            L10n.locationAlertsUnavailable
         }
     }
 }
