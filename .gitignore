@@ -13,3 +13,7 @@ xcuserdata/
 
 # Secrets
 Homu/Secrets.swift
+
+Config/
+
+xcshareddata/
