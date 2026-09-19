@@ -8,18 +8,43 @@ struct ContentView: View {
     @State private var query = ""
 
     var body: some View {
+        if hasMapboxAccessToken {
+            map
+        } else {
+            missingTokenView
+        }
+    }
+
+    private var hasMapboxAccessToken: Bool {
+        guard let token = Bundle.main.object(forInfoDictionaryKey: "MBXAccessToken") as? String else {
+            return false
+        }
+
+        let trimmedToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedToken.hasPrefix("pk.") && trimmedToken.count > 3
+    }
+
+    private var map: some View {
         Map(initialViewport: .camera(center: tokyo, zoom: 5))
-            .mapStyle(.light)
-            .ornamentOptions(OrnamentOptions(
-                scaleBar: ScaleBarViewOptions(visibility: .hidden),
-                attributionButton: AttributionButtonOptions(margins: CGPoint(x: -1000, y: -1000))
-            ))
-            .ignoresSafeArea()
-            .overlay(alignment: .top) {
-                SearchBar(query: $query)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-            }
+        .mapStyle(.light)
+        .ornamentOptions(OrnamentOptions(
+            scaleBar: ScaleBarViewOptions(visibility: .hidden),
+            attributionButton: AttributionButtonOptions(margins: CGPoint(x: -1000, y: -1000))
+        ))
+        .ignoresSafeArea()
+        .overlay(alignment: .top) {
+            SearchBar(query: $query)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+        }
+    }
+
+    private var missingTokenView: some View {
+        ContentUnavailableView {
+            Label("Mapbox Token Required", systemImage: "map")
+        } description: {
+            Text("Add your public Mapbox token to Config/Local.xcconfig, then rebuild the app.")
+        }
     }
 }
 

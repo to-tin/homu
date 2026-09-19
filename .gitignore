@@ -11,5 +11,5 @@ xcuserdata/
 # macOS
 .DS_Store
 
-# Secrets
-Homu/Secrets.swift
+# Developer-specific configuration
+Config/Local.xcconfig
