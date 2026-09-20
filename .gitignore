@@ -13,3 +13,7 @@ xcuserdata/
 
 # Developer-specific configuration
 Config/Local.xcconfig
+Homu/Secrets.swift
+
+# Local design previews
+*.html

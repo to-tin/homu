@@ -18,6 +18,7 @@
 		1A0000000000000000000009 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000000000000000000001D /* L10n.swift */; };
 		1A000000000000000000000A /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000034 /* Localizable.strings */; };
 		1A000000000000000000000B /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000035 /* InfoPlist.strings */; };
+		2FA588B1305F7FBE006DA0AF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2FA588B0305F7FBE006DA0AF /* Assets.xcassets */; };
 		2FEF12F8305E043000C88355 /* MapboxMaps in Frameworks */ = {isa = PBXBuildFile; productRef = 2FEF12F7305E043000C88355 /* MapboxMaps */; };
 /* End PBXBuildFile section */
 
@@ -45,6 +46,7 @@
 		1A0000000000000000000026 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		1A0000000000000000000027 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		1A0000000000000000000028 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		2FA588B0305F7FBE006DA0AF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,6 +73,7 @@
 		1A0000000000000000000031 /* Homu */ = {
 			isa = PBXGroup;
 			children = (
+				2FA588B0305F7FBE006DA0AF /* Assets.xcassets */,
 				1A0000000000000000000011 /* HomuApp.swift */,
 				1A0000000000000000000012 /* ContentView.swift */,
 				1A0000000000000000000013 /* LocationManager.swift */,
@@ -173,6 +176,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1A000000000000000000000A /* Localizable.strings in Resources */,
+				2FA588B1305F7FBE006DA0AF /* Assets.xcassets in Resources */,
 				1A000000000000000000000B /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

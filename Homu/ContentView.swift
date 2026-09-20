@@ -4,13 +4,17 @@ import SwiftUI
 
 private let homuMapBackground = Color(red: 234.0 / 255.0, green: 242.0 / 255.0, blue: 251.0 / 255.0)
 private let homuWaterBlue = Color(red: 169.0 / 255.0, green: 206.0 / 255.0, blue: 236.0 / 255.0)
-private let homuPinRed = Color(red: 174.0 / 255.0, green: 88.0 / 255.0, blue: 84.0 / 255.0)
+private let homuPinRed = Color(red: 179.0 / 255.0, green: 34.0 / 255.0, blue: 52.0 / 255.0)
+private let homuGrey = Color(red: 142.0 / 255.0, green: 142.0 / 255.0, blue: 147.0 / 255.0)
 
 struct ContentView: View {
     @EnvironmentObject private var tripMonitor: TripMonitor
     @StateObject private var searchModel = StationSearchViewModel()
     @State private var isSearchActive = false
     @State private var pendingTripDestination: LocationSelection?
+    @State private var savedStations: [LocationSelection] = []
+    @State private var showingSavedOnly = false
+    private var savedStationIDs: Set<String> { Set(savedStations.map { String(describing: $0.id) }) }
     @State private var viewport: Viewport = .followPuck(
         zoom: 13,
         bearing: .constant(0)
@@ -66,7 +70,12 @@ struct ContentView: View {
                     .onStyleLoaded { _ in
                         guard let map = proxy.map else { return }
                         try? map.setLayerProperty(for: "background", property: "background-color", value: "#EAF2FB")
-                        try? map.setLayerProperty(for: "water", property: "fill-color", value: "#A9CEEC")
+                        let waterLayers = map.allLayerIdentifiers.filter { $0.id.lowercased().contains("water") }
+                        for layer in waterLayers {
+                            try? map.setLayerProperty(for: layer.id, property: "fill-color", value: "#A9CEEC")
+                            try? map.setLayerProperty(for: layer.id, property: "line-color", value: "#A9CEEC")
+                        }
+                        try? map.setStyleImportConfigProperty(for: "basemap", config: "colorWater", value: "#A9CEEC")
                     }
                     .ornamentOptions(OrnamentOptions(
                         scaleBar: ScaleBarViewOptions(visibility: .hidden),
@@ -92,20 +101,20 @@ struct ContentView: View {
                         .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 } else {
                     HStack(spacing: 8) {
-                        HStack(spacing: 10) {
+                        HStack(spacing: 14) {
                             Image(systemName: "magnifyingglass")
-                                .foregroundStyle(.secondary)
+                                .foregroundColor(homuGrey)
                                 .frame(width: 16, alignment: .leading)
                             ZStack(alignment: .leading) {
                                 if searchModel.query.isEmpty && !searchFocused {
                                     Typewriter(sequences: [L10n.searchStations])
-                                        .foregroundStyle(.secondary)
+                                        .foregroundColor(homuGrey)
                                         .allowsHitTesting(false)
                                 }
                                 TextField("", text: $searchModel.query)
                                     .textFieldStyle(.plain)
-                                    .foregroundStyle(.secondary)
-                                    .tint(.secondary)
+                                    .foregroundColor(homuGrey)
+                                    .tint(homuGrey)
                                     .focused($searchFocused)
                                     .disabled(!isSearchActive)
                                     .accessibilityLabel(L10n.searchStations)
@@ -115,9 +124,9 @@ struct ContentView: View {
                         .padding(.vertical, 12)
                         .background(Color.white, in: Capsule())
                         .overlay(
-                            Capsule().strokeBorder(.primary.opacity(isSearchActive ? 0.08 : 0), lineWidth: 0.5)
+                            Capsule().strokeBorder(homuGrey.opacity(0.25), lineWidth: 0.5)
                         )
-                        .shadow(color: .black.opacity(isSearchActive ? 0 : 0.12), radius: 10, y: 2)
+                        .shadow(color: .black.opacity(isSearchActive ? 0.06 : 0.12), radius: 10, y: 2)
                         .contentShape(Capsule())
                         .onTapGesture { activate() }
 
@@ -125,12 +134,27 @@ struct ContentView: View {
                             Button(action: deactivate) {
                                 Image(systemName: "xmark")
                                     .font(.system(size: 16, weight: .medium))
-                                    .foregroundStyle(.secondary)
+                                    .foregroundColor(homuGrey)
                                     .frame(width: 36, height: 36)
                                     .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
                             .transition(.opacity.combined(with: .move(edge: .trailing)))
+                        } else {
+                            Button(action: { showingSavedOnly = true; activate() }) {
+                                Image("StarFill")
+                                    .renderingMode(.template)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .foregroundColor(Color(red: 1.0, green: 0.78, blue: 0.0))
+                                    .frame(width: 22, height: 22)
+                                    .frame(width: 44, height: 44)
+                                    .background(Color.white, in: Circle())
+                                    .shadow(color: .black.opacity(0.12), radius: 10, y: 2)
+                                    .contentShape(Circle())
+                            }
+                            .buttonStyle(.plain)
+                            .transition(.opacity)
                         }
                     }
                     .padding(.horizontal, 16)
@@ -144,7 +168,18 @@ struct ContentView: View {
                             isUsingCurrentLocation: searchModel.isUsingCurrentLocation,
                             isLoading: searchModel.isLoading,
                             errorMessage: searchModel.errorMessage,
-                            onPick: pick
+                            savedStations: savedStations,
+                            savedIDs: savedStationIDs,
+                            showSavedOnly: showingSavedOnly,
+                            onPick: pick,
+                            onToggleSave: { station in
+                                let id = String(describing: station.id)
+                                if let idx = savedStations.firstIndex(where: { String(describing: $0.id) == id }) {
+                                    savedStations.remove(at: idx)
+                                } else {
+                                    savedStations.append(station)
+                                }
+                            }
                         )
                         .transition(.opacity)
                     }
@@ -161,16 +196,17 @@ struct ContentView: View {
                         Spacer()
 
                         Button(action: centerOnUser) {
-                            Image(systemName: "location.fill")
-                                .font(.system(size: 19, weight: .semibold))
-                                .foregroundStyle(.secondary)
-                                .frame(width: 48, height: 48)
-                                .background(Color.white.opacity(0.94), in: Circle())
-                                .overlay {
-                                    Circle()
-                                        .strokeBorder(homuWaterBlue.opacity(0.8), lineWidth: 1)
-                                }
-                                .shadow(color: .black.opacity(0.15), radius: 7, y: 2)
+                            ZStack {
+                                Circle().fill(homuGrey)
+                                Image("NavArrow")
+                                    .renderingMode(.template)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .foregroundColor(.white)
+                                    .frame(width: 22, height: 22)
+                            }
+                            .frame(width: 48, height: 48)
+                            .shadow(color: .black.opacity(0.15), radius: 7, y: 2)
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(L10n.centerOnUserLocation)
@@ -213,6 +249,7 @@ struct ContentView: View {
         }
         .onChange(of: searchModel.query) {
             searchModel.queryDidChange()
+            if !searchModel.query.isEmpty { showingSavedOnly = false }
         }
         .onChange(of: displayedTripDestination?.id) { previousDestinationID, destinationID in
             guard previousDestinationID != nil, destinationID == nil else { return }
@@ -242,6 +279,7 @@ struct ContentView: View {
     private func deactivate() {
         searchFocused = false
         isSearchActive = false
+        showingSavedOnly = false
         searchModel.deactivate(clearQuery: true)
     }
 
@@ -321,14 +359,14 @@ private struct TripStatusBanner: View {
         HStack(spacing: 12) {
             Image(systemName: statusSymbol)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.secondary)
+                .foregroundColor(homuGrey)
                 .frame(width: 32, height: 32)
                 .background(homuWaterBlue.opacity(0.55), in: Circle())
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(statusText)
                     .font(.headline)
-                    .foregroundStyle(.secondary)
+                    .foregroundColor(homuGrey)
                 Text(destinationName)
                     .font(.caption)
                     .foregroundStyle(.secondary.opacity(0.8))
@@ -365,16 +403,55 @@ private struct TripStatusBanner: View {
     }
 }
 
+private struct PhosphorNavArrow: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width, h = rect.height
+        var p = Path()
+        p.move(to: CGPoint(x: w * 0.95, y: h * 0.05))
+        p.addLine(to: CGPoint(x: w * 0.05, y: h * 0.40))
+        p.addLine(to: CGPoint(x: w * 0.48, y: h * 0.56))
+        p.addLine(to: CGPoint(x: w * 0.66, y: h * 0.95))
+        p.closeSubpath()
+        return p
+    }
+}
+
+private struct TablerPin: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width, h = rect.height
+        let r = w / 2
+        let cx = w / 2
+        let cy = r
+        var p = Path()
+        p.move(to: CGPoint(x: cx, y: 0))
+        p.addArc(center: CGPoint(x: cx, y: cy), radius: r,
+                 startAngle: .degrees(-90), endAngle: .degrees(-180),
+                 clockwise: true)
+        p.addQuadCurve(to: CGPoint(x: cx, y: h),
+                       control: CGPoint(x: cx - r * 0.25, y: h * 0.88))
+        p.addQuadCurve(to: CGPoint(x: w, y: cy),
+                       control: CGPoint(x: cx + r * 0.25, y: h * 0.88))
+        p.addArc(center: CGPoint(x: cx, y: cy), radius: r,
+                 startAngle: .degrees(0), endAngle: .degrees(-90),
+                 clockwise: true)
+        p.closeSubpath()
+        return p
+    }
+}
+
 private struct SelectedDestinationPin: View {
     let destinationName: String
 
     var body: some View {
-        Image(systemName: "mappin.circle.fill")
-            .font(.system(size: 34, weight: .semibold))
-            .symbolRenderingMode(.palette)
-            .foregroundStyle(homuPinRed, Color.white)
-            .padding(8)
-            .shadow(color: .black.opacity(0.18), radius: 4, y: 2)
+        TablerPin()
+            .fill(homuPinRed)
+            .overlay(
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 9, height: 9)
+                    .offset(y: -6)
+            )
+            .frame(width: 28, height: 38)
             .accessibilityLabel(L10n.selectedStation(destinationName))
     }
 }
@@ -429,7 +506,11 @@ private struct ResultsList: View {
     let isUsingCurrentLocation: Bool
     let isLoading: Bool
     let errorMessage: String?
+    let savedStations: [LocationSelection]
+    let savedIDs: Set<String>
+    let showSavedOnly: Bool
     let onPick: (LocationSelection) -> Void
+    let onToggleSave: (LocationSelection) -> Void
 
     private var normalizedQuery: String {
         query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -447,6 +528,16 @@ private struct ResultsList: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
+                if showSavedOnly && normalizedQuery.isEmpty {
+                    if !savedStations.isEmpty {
+                        sectionHeader("Saved")
+                        ForEach(savedStations) { destination in
+                            resultRow(destination, systemImage: "tram.fill")
+                        }
+                    } else {
+                        statusMessage("No saved stations yet")
+                    }
+                } else {
                 if normalizedQuery.isEmpty && !recentDestinations.isEmpty {
                     sectionHeader(L10n.recentDestinations)
                     ForEach(recentDestinations) { destination in
@@ -473,6 +564,7 @@ private struct ResultsList: View {
                 } else if !hasResults {
                     statusMessage(normalizedQuery.isEmpty ? L10n.noTokyoStations : L10n.noMatchingStations)
                 }
+                }
             }
             .padding(.top, 12)
         }
@@ -489,7 +581,7 @@ private struct ResultsList: View {
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
             .font(.caption.weight(.semibold))
-            .foregroundStyle(.secondary)
+            .foregroundColor(homuGrey)
             .textCase(.uppercase)
             .padding(.horizontal, 20)
             .padding(.top, 14)
@@ -498,30 +590,50 @@ private struct ResultsList: View {
 
     @ViewBuilder
     private func resultRow(_ destination: LocationSelection, systemImage: String) -> some View {
-        Button {
-            onPick(destination)
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 16, alignment: .leading)
-                Text(destination.name)
-                    .foregroundStyle(.secondary)
-                Spacer()
+        HStack(spacing: 10) {
+            Button {
+                onPick(destination)
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: systemImage)
+                        .font(.system(size: 14))
+                        .foregroundColor(homuGrey)
+                        .frame(width: 16, alignment: .leading)
+                    Text(destination.name)
+                        .foregroundColor(homuGrey)
+                    Spacer(minLength: 8)
+                }
+                .contentShape(Rectangle())
             }
-            .padding(.leading, 30)
-            .padding(.trailing, 20)
-            .padding(.vertical, 14)
+            .buttonStyle(.plain)
+
+            Button(action: { onToggleSave(destination) }) {
+                let isSaved = savedIDs.contains(String(describing: destination.id))
+                Image(isSaved ? "StarFill" : "StarOutline")
+                    .renderingMode(.template)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .foregroundColor(isSaved ? Color(red: 1.0, green: 0.78, blue: 0.0) : homuGrey.opacity(0.4))
+                    .frame(width: 18, height: 18)
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
-        Divider().padding(.leading, 56)
+        .padding(.leading, 34)
+        .padding(.trailing, 20)
+        .padding(.vertical, 14)
+        Rectangle()
+            .fill(homuGrey.opacity(0.12))
+            .frame(height: 0.33)
+            .padding(.leading, 60)
+            .padding(.trailing, 58)
     }
 
     private func statusMessage(_ message: String) -> some View {
         Text(message)
             .font(.callout)
-            .foregroundStyle(.secondary)
+            .foregroundColor(homuGrey)
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 24)
             .padding(.vertical, 28)
