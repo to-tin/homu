@@ -71,7 +71,6 @@ struct ContentView: View {
                         guard let map = proxy.map else { return }
                         try? map.setLayerProperty(for: "background", property: "background-color", value: "#EAF2FB")
                         let waterLayers = map.allLayerIdentifiers.filter { $0.id.lowercased().contains("water") }
-                        print("HOMU water layers:", waterLayers.map { "\($0.id) type=\($0.type)" })
                         for layer in waterLayers {
                             try? map.setLayerProperty(for: layer.id, property: "fill-color", value: "#A9CEEC")
                             try? map.setLayerProperty(for: layer.id, property: "line-color", value: "#A9CEEC")

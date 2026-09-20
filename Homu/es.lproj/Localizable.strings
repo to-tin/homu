@@ -7,13 +7,12 @@
 "Add your public Mapbox token to Config/Local.xcconfig, then rebuild the app." = "Añade tu token público de Mapbox a Config/Local.xcconfig y vuelve a compilar la app.";
 "Trip In Progress" = "Viaje en curso";
 "Recent Destinations" = "Destinos recientes";
-"Closest Tokyo Stations" = "Estaciones de Tokio más cercanas";
-"Tokyo Stations" = "Estaciones de Tokio";
+"Stations" = "Estaciones";
 "No Tokyo stations found." = "No se encontraron estaciones de Tokio.";
 "No stations match your search." = "Ninguna estación coincide con tu búsqueda.";
 "The destination could not be saved." = "No se pudo guardar el destino.";
 "Recent destinations are unavailable." = "Los destinos recientes no están disponibles.";
-"Tokyo stations could not be loaded." = "No se pudieron cargar las estaciones de Tokio.";
+"Couldn't load stations." = "No se pudieron cargar las estaciones.";
 "Your station is coming up" = "Tu estación está cerca";
 "You've arrived" = "Has llegado";
 "Always-on location access is required for trip notifications." = "Se necesita acceso permanente a la ubicación para las notificaciones del viaje.";
