@@ -20,6 +20,11 @@
 "Always-on location access is required for trip notifications." = "Always-on location access is required for trip notifications.";
 "Notification access is required for trip alerts." = "Notification access is required for trip alerts.";
 "Location-based trip alerts aren't available on this device." = "Location-based trip alerts aren't available on this device.";
+"Location Access Required" = "Location Access Required";
+"Homu needs your location while you're using the app to show your position and find nearby stations." = "Homu needs your location while you're using the app to show your position and find nearby stations.";
+"Location access is required to continue. Open Settings and choose “While Using the App”." = "Location access is required to continue. Open Settings and choose “While Using the App”.";
+"Allow Location Access" = "Allow Location Access";
+"Open Settings" = "Open Settings";
 "The location usage database contains invalid data." = "The location usage database contains invalid data.";
 "Trip in progress to %@" = "Trip in progress to %@";
 "Selected station: %@" = "Selected station: %@";

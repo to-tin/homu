@@ -1,6 +1,7 @@
 import CoreLocation
 import MapboxMaps
 import SwiftUI
+import UIKit
 
 private let homuMapBackground = Color(red: 234.0 / 255.0, green: 242.0 / 255.0, blue: 251.0 / 255.0)
 private let homuWaterBlue = Color(red: 169.0 / 255.0, green: 206.0 / 255.0, blue: 236.0 / 255.0)
@@ -32,10 +33,12 @@ struct ContentView: View {
     }
 
     var body: some View {
-        if hasMapboxAccessToken {
-            map
-        } else {
-            missingTokenView
+        LocationAccessGate(locationManager: searchModel.locationManager) {
+            if hasMapboxAccessToken {
+                map
+            } else {
+                missingTokenView
+            }
         }
     }
 
@@ -322,6 +325,114 @@ struct ContentView: View {
                 tripErrorMessage = error.localizedDescription
                 isTripErrorPresented = true
             }
+        }
+    }
+}
+
+private struct LocationAccessGate<Content: View>: View {
+    @ObservedObject var locationManager: LocationManager
+    @Environment(\.scenePhase) private var scenePhase
+
+    private let content: () -> Content
+
+    init(
+        locationManager: LocationManager,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        self.locationManager = locationManager
+        self.content = content
+    }
+
+    private var hasRequiredAccess: Bool {
+        locationManager.authorizationStatus == .authorizedWhenInUse ||
+            locationManager.authorizationStatus == .authorizedAlways
+    }
+
+    var body: some View {
+        Group {
+            if hasRequiredAccess {
+                content()
+            } else {
+                permissionView
+            }
+        }
+        .onAppear {
+            locationManager.requestAccess()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else { return }
+            locationManager.refreshAuthorizationStatus()
+        }
+    }
+
+    private var permissionView: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            Image(systemName: "location.circle.fill")
+                .font(.system(size: 72, weight: .regular))
+                .foregroundStyle(homuPinRed, homuWaterBlue.opacity(0.5))
+                .accessibilityHidden(true)
+
+            VStack(spacing: 12) {
+                Text(L10n.locationAccessRequired)
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.center)
+
+                Text(permissionMessage)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Button(action: permissionAction) {
+                Text(permissionButtonTitle)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(homuPinRed, in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(permissionMessage)
+
+            Spacer()
+        }
+        .padding(.horizontal, 32)
+        .background(Color(uiColor: .systemBackground).ignoresSafeArea())
+    }
+
+    private var permissionMessage: String {
+        switch locationManager.authorizationStatus {
+        case .notDetermined:
+            L10n.locationAccessExplanation
+        case .denied, .restricted:
+            L10n.locationAccessSettingsInstructions
+        case .authorizedAlways, .authorizedWhenInUse:
+            ""
+        @unknown default:
+            L10n.locationAccessSettingsInstructions
+        }
+    }
+
+    private var permissionButtonTitle: String {
+        switch locationManager.authorizationStatus {
+        case .notDetermined:
+            L10n.allowLocationAccess
+        default:
+            L10n.openSettings
+        }
+    }
+
+    private func permissionAction() {
+        switch locationManager.authorizationStatus {
+        case .notDetermined:
+            locationManager.requestAccess()
+        default:
+            guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else { return }
+            UIApplication.shared.open(settingsURL)
         }
     }
 }

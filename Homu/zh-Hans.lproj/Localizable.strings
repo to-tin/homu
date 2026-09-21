@@ -20,6 +20,11 @@
 "Always-on location access is required for trip notifications." = "行程通知需要始终允许访问位置。";
 "Notification access is required for trip alerts." = "行程提醒需要通知权限。";
 "Location-based trip alerts aren't available on this device." = "此设备不支持基于位置的行程提醒。";
+"Location Access Required" = "需要位置访问权限";
+"Homu needs your location while you're using the app to show your position and find nearby stations." = "Homu需要在您使用应用时访问位置，以显示您的当前位置并查找附近的车站。";
+"Location access is required to continue. Open Settings and choose “While Using the App”." = "需要位置访问权限才能继续。请打开“设置”并选择“使用App期间”。";
+"Allow Location Access" = "允许访问位置";
+"Open Settings" = "打开设置";
 "The location usage database contains invalid data." = "位置使用数据库包含无效数据。";
 "Trip in progress to %@" = "正在前往%@";
 "Selected station: %@" = "已选车站：%@";

@@ -20,6 +20,11 @@
 "Always-on location access is required for trip notifications." = "Se necesita acceso permanente a la ubicación para las notificaciones del viaje.";
 "Notification access is required for trip alerts." = "Se necesita acceso a las notificaciones para las alertas del viaje.";
 "Location-based trip alerts aren't available on this device." = "Las alertas de viaje basadas en la ubicación no están disponibles en este dispositivo.";
+"Location Access Required" = "Se necesita acceso a la ubicación";
+"Homu needs your location while you're using the app to show your position and find nearby stations." = "Homu necesita tu ubicación mientras usas la app para mostrar tu posición y encontrar estaciones cercanas.";
+"Location access is required to continue. Open Settings and choose “While Using the App”." = "Se necesita acceso a la ubicación para continuar. Abre Ajustes y elige «Al usar la app».";
+"Allow Location Access" = "Permitir acceso a la ubicación";
+"Open Settings" = "Abrir Ajustes";
 "The location usage database contains invalid data." = "La base de datos de uso de ubicaciones contiene datos no válidos.";
 "Trip in progress to %@" = "Viaje en curso a %@";
 "Selected station: %@" = "Estación seleccionada: %@";
