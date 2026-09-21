@@ -1,2 +1,3 @@
 "NSLocationAlwaysAndWhenInUseUsageDescription" = "Homu monitors your active trip in the background to alert you near your station and when you arrive.";
 "NSLocationWhenInUseUsageDescription" = "Homu uses your location to show where you are on the map.";
+"NSAlarmKitUsageDescription" = "Homu schedules a silent vibration alarm when you arrive at your destination.";

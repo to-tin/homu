@@ -24,6 +24,8 @@
 	<true/>
 	<key>MBXAccessToken</key>
 	<string>$(MAPBOX_ACCESS_TOKEN)</string>
+	<key>NSAlarmKitUsageDescription</key>
+	<string>Homu schedules a silent vibration alarm when you arrive at your destination.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Homu monitors your active trip in the background to alert you near your station and when you arrive.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

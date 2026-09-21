@@ -1,2 +1,3 @@
 "NSLocationAlwaysAndWhenInUseUsageDescription" = "Homu会在后台监控您正在进行的行程，并在接近车站和到达时提醒您。";
 "NSLocationWhenInUseUsageDescription" = "Homu使用您的位置在地图上显示您所在的位置。";
+"NSAlarmKitUsageDescription" = "Homu会在您到达目的地时设置静音振动闹钟。";

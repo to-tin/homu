@@ -15,6 +15,8 @@
 "Couldn't load stations." = "No se pudieron cargar las estaciones.";
 "Your station is coming up" = "Tu estación está cerca";
 "You've arrived" = "Has llegado";
+"Dismiss" = "Descartar";
+"You've arrived at %@" = "Has llegado a %@";
 "Always-on location access is required for trip notifications." = "Se necesita acceso permanente a la ubicación para las notificaciones del viaje.";
 "Notification access is required for trip alerts." = "Se necesita acceso a las notificaciones para las alertas del viaje.";
 "Location-based trip alerts aren't available on this device." = "Las alertas de viaje basadas en la ubicación no están disponibles en este dispositivo.";

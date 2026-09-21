@@ -21,6 +21,7 @@ enum L10n {
     static let tokyoStationsLoadFailed = String(localized: "Couldn't load stations.")
     static let stationApproachingTitle = String(localized: "Your station is coming up")
     static let arrivedTitle = String(localized: "You've arrived")
+    static let dismissAlarm = LocalizedStringResource("Dismiss")
     static let alwaysOnLocationRequired = String(
         localized: "Always-on location access is required for trip notifications."
     )
@@ -48,6 +49,10 @@ enum L10n {
 
     static func arrived(at station: String) -> String {
         format(String(localized: "You're at %@."), station)
+    }
+
+    static func arrivalAlarmTitle(at station: String) -> LocalizedStringResource {
+        LocalizedStringResource("You've arrived at \(station)")
     }
 
     static func unableToOpenLocationDatabase(_ message: String) -> String {
