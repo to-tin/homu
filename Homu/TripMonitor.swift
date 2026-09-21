@@ -104,6 +104,7 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
 
         if let activeTrip {
             startProximityMonitoring(for: activeTrip)
+            Task { await refreshPendingNotificationSounds(for: activeTrip.id) }
         }
     }
 
@@ -196,7 +197,7 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
 
             let content = UNMutableNotificationContent()
             content.categoryIdentifier = tripNotificationCategory
-            content.sound = .default
+            content.sound = quietNotificationSound
             content.threadIdentifier = "active-trip"
 
             switch proximity {
@@ -214,6 +215,31 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
                 trigger: UNLocationNotificationTrigger(region: region, repeats: false)
             )
             try await notificationCenter.add(request)
+        }
+    }
+
+    private var quietNotificationSound: UNNotificationSound? {
+        guard Bundle.main.url(forResource: "QuietNotification", withExtension: "wav") != nil else {
+            return nil
+        }
+        return UNNotificationSound(named: UNNotificationSoundName("QuietNotification.wav"))
+    }
+
+    private func refreshPendingNotificationSounds(for tripID: UUID) async {
+        let identifiers = Set(Proximity.allCases.map { notificationID(for: $0, tripID: tripID) })
+        let requests = await notificationCenter.pendingNotificationRequests()
+        for request in requests where identifiers.contains(request.identifier) {
+            guard activeTrip?.id == tripID else { return }
+            guard let content = request.content.mutableCopy() as? UNMutableNotificationContent else { continue }
+            content.sound = quietNotificationSound
+            try? await notificationCenter.add(UNNotificationRequest(
+                identifier: request.identifier,
+                content: content,
+                trigger: request.trigger
+            ))
+            if activeTrip?.id != tripID {
+                notificationCenter.removePendingNotificationRequests(withIdentifiers: [request.identifier])
+            }
         }
     }
 
@@ -362,7 +388,8 @@ extension TripMonitor: UNUserNotificationCenterDelegate {
             }
         }
 
-        completionHandler([.banner, .sound])
+        // Foreground trip alerts use the explicit haptic feedback above only.
+        completionHandler(isTripNotification ? [.banner] : [.banner, .sound])
     }
 
     nonisolated func userNotificationCenter(
