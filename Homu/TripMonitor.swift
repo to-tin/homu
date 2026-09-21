@@ -121,10 +121,6 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
     }
 
     func startTrip(to destination: LocationSelection) async throws {
-        guard CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self) else {
-            throw TripMonitorError.regionMonitoringUnavailable
-        }
-
         let notificationAccess = try await notificationCenter.requestAuthorization(
             options: [.alert, .sound]
         )
