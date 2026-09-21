@@ -20,6 +20,11 @@
 "Always-on location access is required for trip notifications." = "移動通知を受け取るには、位置情報の「常に許可」が必要です。";
 "Notification access is required for trip alerts." = "移動アラートを受け取るには、通知の許可が必要です。";
 "Location-based trip alerts aren't available on this device." = "このデバイスでは位置情報に基づく移動アラートを利用できません。";
+"Location Access Required" = "位置情報へのアクセスが必要です";
+"Homu needs your location while you're using the app to show your position and find nearby stations." = "現在地の表示と近くの駅の検索には、Homuの使用中に位置情報へのアクセスが必要です。";
+"Location access is required to continue. Open Settings and choose “While Using the App”." = "続行するには位置情報へのアクセスが必要です。設定を開き、「このAppの使用中」を選択してください。";
+"Allow Location Access" = "位置情報へのアクセスを許可";
+"Open Settings" = "設定を開く";
 "The location usage database contains invalid data." = "位置情報の利用履歴に無効なデータが含まれています。";
 "Trip in progress to %@" = "%@への移動中";
 "Selected station: %@" = "選択した駅：%@";

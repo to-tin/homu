@@ -31,6 +31,15 @@ enum L10n {
     static let locationAlertsUnavailable = String(
         localized: "Location-based trip alerts aren't available on this device."
     )
+    static let locationAccessRequired = String(localized: "Location Access Required")
+    static let locationAccessExplanation = String(
+        localized: "Homu needs your location while you're using the app to show your position and find nearby stations."
+    )
+    static let locationAccessSettingsInstructions = String(
+        localized: "Location access is required to continue. Open Settings and choose “While Using the App”."
+    )
+    static let allowLocationAccess = String(localized: "Allow Location Access")
+    static let openSettings = String(localized: "Open Settings")
     static let invalidLocationData = String(
         localized: "The location usage database contains invalid data."
     )

@@ -8,6 +8,7 @@ protocol LocationProviding: AnyObject {
     var locationPublisher: AnyPublisher<CLLocation?, Never> { get }
 
     func requestAccess()
+    func refreshAuthorizationStatus()
     func refreshLocation()
 }
 
@@ -46,6 +47,15 @@ final class LocationManager: NSObject, ObservableObject, LocationProviding {
         }
     }
 
+    func refreshAuthorizationStatus() {
+        authorizationStatus = manager.authorizationStatus
+
+        if authorizationStatus == .authorizedAlways ||
+            authorizationStatus == .authorizedWhenInUse {
+            refreshLocation()
+        }
+    }
+
     func refreshLocation() {
         guard authorizationStatus == .authorizedAlways ||
             authorizationStatus == .authorizedWhenInUse else {
@@ -59,12 +69,7 @@ final class LocationManager: NSObject, ObservableObject, LocationProviding {
 extension LocationManager: CLLocationManagerDelegate {
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         Task { @MainActor in
-            authorizationStatus = manager.authorizationStatus
-
-            if authorizationStatus == .authorizedAlways ||
-                authorizationStatus == .authorizedWhenInUse {
-                refreshLocation()
-            }
+            refreshAuthorizationStatus()
         }
     }
 
