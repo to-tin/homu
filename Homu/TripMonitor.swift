@@ -61,7 +61,7 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
         var radius: CLLocationDistance {
             switch self {
             case .near: 1_000
-            case .arrived: 150
+            case .arrived: 500
             }
         }
     }
