@@ -53,6 +53,8 @@ struct ContentView: View {
             MapReader { proxy in
                 Map(viewport: $viewport) {
                     Puck2D(bearing: .heading)
+                        .topImage(UIImage(named: "PuckTop"))
+                        .bearingImage(UIImage(named: "PuckBearing"))
                         .showsAccuracyRing(true)
 
                     if let destination = displayedTripDestination {
@@ -92,19 +94,70 @@ struct ContentView: View {
 
             VStack(spacing: 0) {
                 if let destination = displayedTripDestination {
-                    TripStatusBanner(
-                        destinationName: destination.name,
-                        status: displayedTripStatus
-                    )
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                        .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                    let isArrived = displayedTripStatus == .arrived
+                    let arrivedGreen = Color(red: 76.0 / 255.0, green: 175.0 / 255.0, blue: 80.0 / 255.0)
+                    HStack(spacing: 8) {
+                        HStack(spacing: 14) {
+                            Group {
+                                if isArrived {
+                                    RingingBell()
+                                } else {
+                                    AnimatedTrain()
+                                }
+                            }
+                                .foregroundColor(isArrived ? arrivedGreen : homuGrey)
+                                .frame(width: 16, alignment: .leading)
+                            Text(destination.name)
+                                .foregroundColor(isArrived ? arrivedGreen : homuGrey)
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .background(Color.white, in: Capsule())
+                        .overlay(Capsule().strokeBorder(homuGrey.opacity(0.25), lineWidth: 0.5))
+                        .shadow(color: .black.opacity(0.12), radius: 10, y: 2)
+
+                        if isArrived {
+                            Button(action: cancelTrip) {
+                                HStack(spacing: 6) {
+                                    Text("Here!")
+                                        .font(.system(size: 15, weight: .semibold))
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 14, weight: .semibold))
+                                }
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 18)
+                                .frame(height: 44)
+                                .background(arrivedGreen, in: Capsule())
+                                .shadow(color: .black.opacity(0.12), radius: 10, y: 2)
+                            }
+                            .buttonStyle(.plain)
+                        } else {
+                            Button(action: cancelTrip) {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundColor(homuGrey)
+                                    .frame(width: 44, height: 44)
+                                    .background(Color.white, in: Circle())
+                                    .shadow(color: .black.opacity(0.12), radius: 10, y: 2)
+                                    .contentShape(Circle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 } else {
                     HStack(spacing: 8) {
                         HStack(spacing: 14) {
-                            Image(systemName: "magnifyingglass")
+                            Image("SearchGlass")
+                                .renderingMode(.template)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
                                 .foregroundColor(homuGrey)
-                                .frame(width: 16, alignment: .leading)
+                                .frame(width: 18, height: 18)
                             ZStack(alignment: .leading) {
                                 if searchModel.query.isEmpty && !searchFocused {
                                     Typewriter(sequences: [L10n.searchStations])
@@ -146,8 +199,8 @@ struct ContentView: View {
                                     .renderingMode(.template)
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
-                                    .foregroundColor(Color(red: 1.0, green: 0.78, blue: 0.0))
-                                    .frame(width: 22, height: 22)
+                                    .foregroundColor(homuGrey)
+                                    .frame(width: 18, height: 18)
                                     .frame(width: 44, height: 44)
                                     .background(Color.white, in: Circle())
                                     .shadow(color: .black.opacity(0.12), radius: 10, y: 2)
@@ -197,16 +250,16 @@ struct ContentView: View {
 
                         Button(action: centerOnUser) {
                             ZStack {
-                                Circle().fill(homuGrey)
+                                Circle().fill(.white)
                                 Image("NavArrow")
                                     .renderingMode(.template)
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
-                                    .foregroundColor(.white)
-                                    .frame(width: 22, height: 22)
+                                    .foregroundColor(homuGrey)
+                                    .frame(width: 18, height: 18)
                             }
-                            .frame(width: 48, height: 48)
-                            .shadow(color: .black.opacity(0.15), radius: 7, y: 2)
+                            .frame(width: 44, height: 44)
+                            .shadow(color: .black.opacity(0.12), radius: 10, y: 2)
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(L10n.centerOnUserLocation)
@@ -217,29 +270,6 @@ struct ContentView: View {
                 .transition(.opacity)
             }
 
-            if tripMonitor.activeTrip != nil {
-                GeometryReader { geometry in
-                    Button(action: cancelTrip) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 24, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .frame(width: 64, height: 64)
-                            .background(homuPinRed.opacity(0.72), in: Circle())
-                            .overlay {
-                                Circle()
-                                    .strokeBorder(.white.opacity(0.55), lineWidth: 1)
-                            }
-                            .shadow(color: homuPinRed.opacity(0.3), radius: 8, y: 3)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(L10n.cancelTrip)
-                    .position(
-                        x: geometry.size.width / 2,
-                        y: geometry.size.height * 0.875
-                    )
-                }
-                .transition(.scale(scale: 0.85).combined(with: .opacity))
-            }
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.88), value: isSearchActive)
         .animation(.spring(response: 0.45, dampingFraction: 0.9), value: displayedTripDestination?.id)
@@ -403,6 +433,34 @@ private struct TripStatusBanner: View {
     }
 }
 
+private struct AnimatedTrain: View {
+    @State private var offset: CGFloat = -2
+
+    var body: some View {
+        Image(systemName: "tram.fill")
+            .offset(x: offset)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                    offset = 2
+                }
+            }
+    }
+}
+
+private struct RingingBell: View {
+    @State private var angle: Double = -14
+
+    var body: some View {
+        Image(systemName: "bell.fill")
+            .rotationEffect(.degrees(angle), anchor: .top)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 0.18).repeatForever(autoreverses: true)) {
+                    angle = 14
+                }
+            }
+    }
+}
+
 private struct PhosphorNavArrow: Shape {
     func path(in rect: CGRect) -> Path {
         let w = rect.width, h = rect.height
@@ -443,15 +501,10 @@ private struct SelectedDestinationPin: View {
     let destinationName: String
 
     var body: some View {
-        TablerPin()
-            .fill(homuPinRed)
-            .overlay(
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: 9, height: 9)
-                    .offset(y: -6)
-            )
-            .frame(width: 28, height: 38)
+        Image("DestinationPin")
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: 32, height: 42)
             .accessibilityLabel(L10n.selectedStation(destinationName))
     }
 }
@@ -527,7 +580,7 @@ private struct ResultsList: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 0) {
                 if showSavedOnly && normalizedQuery.isEmpty {
                     if !savedStations.isEmpty {
                         sectionHeader("Saved")
@@ -583,6 +636,7 @@ private struct ResultsList: View {
             .font(.caption.weight(.semibold))
             .foregroundColor(homuGrey)
             .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 20)
             .padding(.top, 14)
             .padding(.bottom, 6)
