@@ -4,6 +4,11 @@ import Foundation
 import UIKit
 import UserNotifications
 
+#if canImport(AlarmKit)
+import AlarmKit
+import SwiftUI
+#endif
+
 private let tripNotificationCategory = "TRIP_PROGRESS"
 
 struct ActiveTrip: Codable, Identifiable, Sendable {
@@ -23,6 +28,13 @@ struct TripPresentation: Sendable {
     let destination: LocationSelection
     let status: TripStatus
 }
+
+#if canImport(AlarmKit)
+@available(iOS 26.0, *)
+private struct ArrivalAlarmMetadata: AlarmMetadata {
+    let stationName: String
+}
+#endif
 
 @MainActor
 protocol TripMonitoring: AnyObject {
@@ -61,7 +73,7 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
         var radius: CLLocationDistance {
             switch self {
             case .near: 1_000
-            case .arrived: 150
+            case .arrived: 500
             }
         }
     }
@@ -119,6 +131,8 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
         guard notificationAccess else {
             throw TripMonitorError.notificationPermissionDenied
         }
+
+        await requestArrivalAlarmAuthorizationIfNeeded()
 
         switch locationManager.authorizationStatus {
         case .denied, .restricted:
@@ -305,6 +319,8 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
 
         completingTripID = trip.id
 
+        await scheduleArrivalAlarm(for: trip)
+
         if let arrivalHandler {
             _ = try? await arrivalHandler.didArrive(at: trip.destination)
         }
@@ -341,6 +357,48 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
     private func persist(_ trip: ActiveTrip) {
         guard let data = try? JSONEncoder().encode(trip) else { return }
         defaults.set(data, forKey: Self.persistedTripKey)
+    }
+
+    private func requestArrivalAlarmAuthorizationIfNeeded() async {
+        #if canImport(AlarmKit)
+        guard #available(iOS 26.0, *),
+              AlarmManager.shared.authorizationState == .notDetermined else {
+            return
+        }
+
+        _ = try? await AlarmManager.shared.requestAuthorization()
+        #endif
+    }
+
+    private func scheduleArrivalAlarm(for trip: ActiveTrip) async {
+        #if canImport(AlarmKit)
+        guard #available(iOS 26.0, *),
+              AlarmManager.shared.authorizationState == .authorized else {
+            return
+        }
+
+        let stopButton = AlarmButton(
+            text: L10n.dismissAlarm,
+            textColor: .white,
+            systemImageName: "stop.circle.fill"
+        )
+        let alert = AlarmPresentation.Alert(
+            title: L10n.arrivalAlarmTitle(at: trip.destination.name),
+            stopButton: stopButton
+        )
+        let attributes = AlarmAttributes(
+            presentation: AlarmPresentation(alert: alert),
+            metadata: ArrivalAlarmMetadata(stationName: trip.destination.name),
+            tintColor: Color(red: 0.62, green: 0.25, blue: 0.25)
+        )
+        let configuration = AlarmManager.AlarmConfiguration<ArrivalAlarmMetadata>.alarm(
+            schedule: .fixed(Date().addingTimeInterval(1)),
+            attributes: attributes,
+            sound: .named("QuietNotification.wav")
+        )
+
+        _ = try? await AlarmManager.shared.schedule(id: UUID(), configuration: configuration)
+        #endif
     }
 }
 

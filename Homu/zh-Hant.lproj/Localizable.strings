@@ -15,6 +15,8 @@
 "Couldn't load stations." = "無法載入車站。";
 "Your station is coming up" = "即將抵達您的車站";
 "You've arrived" = "您已抵達";
+"Dismiss" = "關閉";
+"You've arrived at %@" = "您已抵達%@";
 "Always-on location access is required for trip notifications." = "行程通知需要「永遠」位置存取權限。";
 "Notification access is required for trip alerts." = "行程提醒需要通知權限。";
 "Location-based trip alerts aren't available on this device." = "此裝置不支援以位置為基礎的行程提醒。";

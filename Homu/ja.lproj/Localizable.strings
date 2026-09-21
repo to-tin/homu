@@ -15,6 +15,8 @@
 "Couldn't load stations." = "駅を読み込めませんでした。";
 "Your station is coming up" = "まもなく目的地の駅です";
 "You've arrived" = "到着しました";
+"Dismiss" = "閉じる";
+"You've arrived at %@" = "%@に到着しました";
 "Always-on location access is required for trip notifications." = "移動通知を受け取るには、位置情報の「常に許可」が必要です。";
 "Notification access is required for trip alerts." = "移動アラートを受け取るには、通知の許可が必要です。";
 "Location-based trip alerts aren't available on this device." = "このデバイスでは位置情報に基づく移動アラートを利用できません。";
