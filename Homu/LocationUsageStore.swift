@@ -57,6 +57,20 @@ struct LocationSelectionHandler: Sendable {
     }
 }
 
+enum SavedStationsStore {
+    private static let savedStationsKey = "saved-stations"
+
+    static func load(from defaults: UserDefaults = .standard) -> [LocationSelection] {
+        guard let data = defaults.data(forKey: savedStationsKey) else { return [] }
+        return (try? JSONDecoder().decode([LocationSelection].self, from: data)) ?? []
+    }
+
+    static func save(_ stations: [LocationSelection], to defaults: UserDefaults = .standard) {
+        guard let data = try? JSONEncoder().encode(stations) else { return }
+        defaults.set(data, forKey: savedStationsKey)
+    }
+}
+
 struct TripArrivalHandler: Sendable {
     private let usageStore: any LocationUsageStoring
 

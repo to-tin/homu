@@ -156,10 +156,33 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
         do {
             try await scheduleNotifications(for: trip)
             startProximityMonitoring(for: trip)
+            locationManager.requestLocation()
         } catch {
             endTrip()
             throw error
         }
+    }
+
+    /// Catches up on proximity changes the app missed while it wasn't running region callbacks,
+    /// such as an arrival notification delivered while the app only had When In Use access.
+    func refreshTripState() async {
+        guard let trip = activeTrip else { return }
+
+        let deliveredIDs = Set(
+            await notificationCenter.deliveredNotifications().map(\.request.identifier)
+        )
+        guard activeTrip?.id == trip.id else { return }
+
+        if deliveredIDs.contains(notificationID(for: .arrived, tripID: trip.id)) {
+            await completeTripIfArrived(alertsUser: false)
+            return
+        }
+
+        if deliveredIDs.contains(notificationID(for: .near, tripID: trip.id)) {
+            markTripAsNearIfActive()
+        }
+
+        locationManager.requestLocation()
     }
 
     @discardableResult
@@ -284,6 +307,32 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
         }
     }
 
+    /// Region entry only fires on crossing a boundary, so a trip started inside a region would
+    /// otherwise never update. This checks a one-shot location from `requestLocation()` instead.
+    private func handleCurrentLocation(_ location: CLLocation) async {
+        guard let trip = activeTrip,
+              location.horizontalAccuracy >= 0,
+              location.horizontalAccuracy <= Proximity.arrived.radius else {
+            return
+        }
+
+        let destination = CLLocation(
+            latitude: trip.destination.latitude,
+            longitude: trip.destination.longitude
+        )
+        let distance = location.distance(from: destination)
+
+        if distance <= Proximity.arrived.radius {
+            await completeTripIfArrived(alertsUser: false)
+        } else if distance <= Proximity.near.radius {
+            markTripAsNearIfActive()
+            // The location trigger only fires on entry, so a pending one would alert on a later visit.
+            notificationCenter.removePendingNotificationRequests(
+                withIdentifiers: [notificationID(for: .near, tripID: trip.id)]
+            )
+        }
+    }
+
     private func markTripAsNearIfActive() {
         guard let trip = activeTrip,
               tripPresentation?.status != .arrived else {
@@ -307,7 +356,9 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
         }
     }
 
-    private func completeTripIfArrived() async {
+    /// `alertsUser` is false when catching up on an arrival the user already saw or is looking at,
+    /// so no alarm rings and no location-triggered arrival alert is left pending.
+    private func completeTripIfArrived(alertsUser: Bool = true) async {
         guard let trip = activeTrip,
               completingTripID != trip.id else {
             return
@@ -315,7 +366,11 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
 
         completingTripID = trip.id
 
-        await scheduleArrivalAlarm(for: trip)
+        if alertsUser {
+            await scheduleArrivalAlarm(for: trip)
+        } else {
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        }
 
         if let arrivalHandler {
             _ = try? await arrivalHandler.didArrive(at: trip.destination)
@@ -329,7 +384,7 @@ final class TripMonitor: NSObject, ObservableObject, TripMonitoring {
         )
         finishTrip(
             trip,
-            preservingArrivalNotification: true,
+            preservingArrivalNotification: alertsUser,
             preservingPresentation: true
         )
         scheduleArrivalBannerDismissal(for: trip.id)
@@ -424,6 +479,21 @@ extension TripMonitor: CLLocationManagerDelegate {
                 await completeTripIfArrived()
             }
         }
+    }
+
+    nonisolated func locationManager(
+        _ manager: CLLocationManager,
+        didUpdateLocations locations: [CLLocation]
+    ) {
+        guard let location = locations.last else { return }
+
+        Task { @MainActor in
+            await handleCurrentLocation(location)
+        }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        // Region monitoring still covers the trip if the one-shot location check fails.
     }
 }
 

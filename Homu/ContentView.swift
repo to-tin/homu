@@ -13,13 +13,14 @@ struct ContentView: View {
     @StateObject private var searchModel = StationSearchViewModel()
     @State private var isSearchActive = false
     @State private var pendingTripDestination: LocationSelection?
-    @State private var savedStations: [LocationSelection] = []
+    @State private var savedStations: [LocationSelection] = SavedStationsStore.load()
     @State private var showingSavedOnly = false
     private var savedStationIDs: Set<String> { Set(savedStations.map { String(describing: $0.id) }) }
     @State private var viewport: Viewport = .followPuck(
         zoom: 13,
         bearing: .constant(0)
     )
+    @State private var mapStyleSubscription: AnyCancelable?
     @State private var tripErrorMessage = ""
     @State private var isTripErrorPresented = false
     @FocusState private var searchFocused: Bool
@@ -72,16 +73,7 @@ struct ContentView: View {
                     }
                 }
                     .mapStyle(.light)
-                    .onStyleLoaded { _ in
-                        guard let map = proxy.map else { return }
-                        try? map.setLayerProperty(for: "background", property: "background-color", value: "#EAF2FB")
-                        let waterLayers = map.allLayerIdentifiers.filter { $0.id.lowercased().contains("water") }
-                        for layer in waterLayers {
-                            try? map.setLayerProperty(for: layer.id, property: "fill-color", value: "#A9CEEC")
-                            try? map.setLayerProperty(for: layer.id, property: "line-color", value: "#A9CEEC")
-                        }
-                        try? map.setStyleImportConfigProperty(for: "basemap", config: "colorWater", value: "#A9CEEC")
-                    }
+                    .onStyleLoaded { _ in applyHomuMapColors(proxy.map) }
                     .ornamentOptions(OrnamentOptions(
                         scaleBar: ScaleBarViewOptions(visibility: .hidden),
                         compass: CompassViewOptions(visibility: .hidden),
@@ -89,6 +81,14 @@ struct ContentView: View {
                         attributionButton: AttributionButtonOptions(position: .bottomLeading, margins: CGPoint(x: 112, y: 18))
                     ))
                     .ignoresSafeArea()
+                    // The SwiftUI style-loaded handler sometimes misses the first load, leaving grey
+                    // water, so also apply on appear and keep a subscription SwiftUI updates can't drop.
+                    .onAppear {
+                        applyHomuMapColors(proxy.map)
+                        mapStyleSubscription = proxy.map?.onStyleLoaded.observe { _ in
+                            applyHomuMapColors(proxy.map)
+                        }
+                    }
             }
 
             if isSearchActive {
@@ -98,19 +98,22 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 if let destination = displayedTripDestination {
                     let isArrived = displayedTripStatus == .arrived
+                    let isNear = displayedTripStatus == .near
                     let arrivedGreen = Color(red: 76.0 / 255.0, green: 175.0 / 255.0, blue: 80.0 / 255.0)
                     HStack(spacing: 8) {
                         HStack(spacing: 14) {
                             Group {
                                 if isArrived {
                                     RingingBell()
+                                } else if isNear {
+                                    Image(systemName: "bell.fill")
                                 } else {
                                     AnimatedTrain()
                                 }
                             }
                                 .foregroundColor(isArrived ? arrivedGreen : homuGrey)
                                 .frame(width: 16, alignment: .leading)
-                            Text(destination.name)
+                            Text(isNear ? L10n.stationIsNear(destination.name) : destination.name)
                                 .foregroundColor(isArrived ? arrivedGreen : homuGrey)
                                 .lineLimit(1)
                             Spacer(minLength: 0)
@@ -235,6 +238,7 @@ struct ContentView: View {
                                 } else {
                                     savedStations.append(station)
                                 }
+                                SavedStationsStore.save(savedStations)
                             }
                         )
                         .transition(.opacity)
@@ -293,6 +297,17 @@ struct ContentView: View {
         } message: {
             Text(tripErrorMessage)
         }
+    }
+
+    private func applyHomuMapColors(_ map: MapboxMap?) {
+        guard let map, map.isStyleLoaded else { return }
+        try? map.setLayerProperty(for: "background", property: "background-color", value: "#EAF2FB")
+        let waterLayers = map.allLayerIdentifiers.filter { $0.id.lowercased().contains("water") }
+        for layer in waterLayers {
+            try? map.setLayerProperty(for: layer.id, property: "fill-color", value: "#A9CEEC")
+            try? map.setLayerProperty(for: layer.id, property: "line-color", value: "#A9CEEC")
+        }
+        try? map.setStyleImportConfigProperty(for: "basemap", config: "colorWater", value: "#A9CEEC")
     }
 
     private var missingTokenView: some View {

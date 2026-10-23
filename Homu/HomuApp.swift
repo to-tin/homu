@@ -4,6 +4,7 @@ import SwiftUI
 @main
 struct HomuApp: App {
     @StateObject private var tripMonitor: TripMonitor
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         _tripMonitor = StateObject(
@@ -20,6 +21,10 @@ struct HomuApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(tripMonitor)
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else { return }
+            Task { await tripMonitor.refreshTripState() }
         }
     }
 }
