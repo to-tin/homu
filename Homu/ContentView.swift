@@ -13,7 +13,7 @@ struct ContentView: View {
     @StateObject private var searchModel = StationSearchViewModel()
     @State private var isSearchActive = false
     @State private var pendingTripDestination: LocationSelection?
-    @State private var savedStations: [LocationSelection] = []
+    @State private var savedStations: [LocationSelection] = SavedStationsStore.load()
     @State private var showingSavedOnly = false
     private var savedStationIDs: Set<String> { Set(savedStations.map { String(describing: $0.id) }) }
     @State private var viewport: Viewport = .followPuck(
@@ -98,19 +98,22 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 if let destination = displayedTripDestination {
                     let isArrived = displayedTripStatus == .arrived
+                    let isNear = displayedTripStatus == .near
                     let arrivedGreen = Color(red: 76.0 / 255.0, green: 175.0 / 255.0, blue: 80.0 / 255.0)
                     HStack(spacing: 8) {
                         HStack(spacing: 14) {
                             Group {
                                 if isArrived {
                                     RingingBell()
+                                } else if isNear {
+                                    Image(systemName: "bell.fill")
                                 } else {
                                     AnimatedTrain()
                                 }
                             }
                                 .foregroundColor(isArrived ? arrivedGreen : homuGrey)
                                 .frame(width: 16, alignment: .leading)
-                            Text(destination.name)
+                            Text(isNear ? L10n.stationIsNear(destination.name) : destination.name)
                                 .foregroundColor(isArrived ? arrivedGreen : homuGrey)
                                 .lineLimit(1)
                             Spacer(minLength: 0)
@@ -235,6 +238,7 @@ struct ContentView: View {
                                 } else {
                                     savedStations.append(station)
                                 }
+                                SavedStationsStore.save(savedStations)
                             }
                         )
                         .transition(.opacity)
